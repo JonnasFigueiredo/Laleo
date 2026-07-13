@@ -29,10 +29,10 @@ export const PERFIS: PerfilAvatar[] = [
   {
     id: 'leo',
     nome: 'Leo',
-    emoji: '👦',
+    emoji: '🦖',
     modelo: '/models/leo.vrm',
-    taxaVoz: 1.0,
-    tomFallback: 1.0,
+    taxaVoz: 1.1,
+    tomFallback: 1.2,
   },
 ]
 

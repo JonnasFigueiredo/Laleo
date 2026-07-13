@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<!-- Sonda de desenvolvimento: renderiza um VRM e envia a captura para o
+     receptor local (ver skill /rodar). Não faz parte do app. -->
+<body style="margin:0;font-family:monospace">
+<div id="s">renderizando...</div>
+<script type="module">
+const params = new URLSearchParams(location.search)
+const modelo = params.get('m') ?? '/models/tmp_leo.vrm'
+const st = document.getElementById('s')
+try {
+  const THREE = await import('/node_modules/.vite/deps/three.js')
+  const { VRMLoaderPlugin } = await import('/node_modules/.vite/deps/@pixiv_three-vrm.js')
+  const { GLTFLoader } = await import('/node_modules/three/examples/jsm/loaders/GLTFLoader.js?import')
+
+  const cena = new THREE.Scene()
+  cena.background = new THREE.Color(0xf5eefc)
+  const camera = new THREE.PerspectiveCamera(30, 0.75, 0.1, 100)
+  const renderer = new THREE.WebGLRenderer({ preserveDrawingBuffer: true, antialias: true })
+  renderer.setSize(240, 320)
+  document.body.appendChild(renderer.domElement)
+  const luz = new THREE.DirectionalLight(0xffffff, 2.0)
+  luz.position.set(1.5, 2.5, 3)
+  cena.add(luz, new THREE.AmbientLight(0xffffff, 1.1))
+
+  const loader = new GLTFLoader()
+  loader.register(p => new VRMLoaderPlugin(p))
+  const vrm = (await loader.loadAsync(modelo + '?v=' + Date.now())).userData.vrm
+  vrm.scene.rotation.y = Math.PI
+  cena.add(vrm.scene)
+  for (const [osso, z] of [['leftUpperArm', 1.15], ['rightUpperArm', -1.15]]) {
+    const n = vrm.humanoid.getNormalizedBoneNode(osso)
+    if (n) n.rotation.z = z
+  }
+  vrm.update(0)
+
+  const caixa = new THREE.Box3().setFromObject(vrm.scene)
+  const topo = caixa.max.y
+  const centro = topo - 0.55
+  const dist = (topo + 0.1 - centro) / Math.tan((15 * Math.PI) / 180)
+  camera.position.set(0, centro + 0.05, dist)
+  camera.lookAt(0, centro, 0)
+  renderer.render(cena, camera)
+
+  const url = renderer.domElement.toDataURL('image/png')
+  const r = await fetch('http://localhost:9377/', { method: 'POST', body: url })
+  st.textContent = 'PROBE OK: ' + (await r.text()) + ' | ' + modelo
+} catch (e) {
+  st.textContent = 'PROBE ERRO: ' + e.message
+}
+</script>
+</body>
+</html>

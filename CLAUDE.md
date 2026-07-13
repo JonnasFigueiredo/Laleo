@@ -48,9 +48,14 @@ cd /d/Projetos/Laleo/backend && export JAVA_HOME="/c/Program Files/Java/jdk-17.0
 
 ## Assets e binários auto-hospedados (frontend/public/)
 
-- `models/lala.vrm` (Vita) e `models/leo.vrm` (Sendagaya Shibu) — VRoid beta samples, **CC0**,
-  de `madjin/vrm-samples`. Perfis avatar+voz em `frontend/src/avatar/perfis.ts` (Laleo = Lala + Leo);
-  a voz da Lala é o faber com playbackRate 1.18 (Piper não tem voz feminina pt-BR)
+- `models/lala.vrm` (Vita, VRoid beta sample, **CC0**, de `madjin/vrm-samples`) e `models/leo.vrm`
+  (**DinoKid**, coleção 100Avatars da Polygonal Mind, **CC0**, via registro `ToxSam/open-source-avatars`,
+  arquivo em arweave.net). Perfis avatar+voz em `frontend/src/avatar/perfis.ts` (Laleo = Lala + Leo);
+  vozes = faber com playbackRate (Piper não tem voz feminina/infantil pt-BR). ATENÇÃO ao escolher
+  modelos: os samples "masc_vroid" e "HairSample_*" do VRoid são corpos-base SEM ROUPA — sempre
+  inspecionar visualmente (probe.html + receptor, ver skill /rodar) antes de usar
+- `probe.html` (public/) — sonda de dev: renderiza um VRM (`?m=/models/x.vrm`) e envia a captura
+  ao receptor local na porta 9377 para inspeção visual
 - `animacoes/idle.vrma` — animação idle profissional (**MIT**, pixiv/ChatVRM), tocada via
   `@pixiv/three-vrm-animation` + AnimationMixer; comemoração continua procedural (fade do mixer).
   Novos `.vrma` (ex.: os 7 oficiais do VRoid Hub, que exigem login para baixar) podem ser

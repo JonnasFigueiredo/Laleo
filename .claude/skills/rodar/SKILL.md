@@ -35,5 +35,9 @@ Prefira `preview_start` com `.claude/launch.json` (configurações `backend` e `
 3. A tela afetada carrega sem erros no console do navegador
 
 ## Aviso sobre screenshot no Browser pane
-Screenshots travam com o canvas WebGL do avatar — verifique a página com
-`get_page_text`/`read_page` e o canvas via `javascript_tool` (checar `getContext('webgl2')`).
+Screenshots travam com o canvas WebGL do avatar, e o requestAnimationFrame do
+painel embutido não roda (canvas fica vazio). Para verificar o visual do avatar:
+faça um render manual via `javascript_tool` — importe three e @pixiv/three-vrm de
+`/node_modules/.vite/deps/`, carregue `/models/lale.vrm`, chame `renderer.render()`
+uma vez e leia pixels com `gl.readPixels` (pele = R alto e R-B > 25). Exemplo real:
+sessão de 2026-07-13 detectou avatar de costas medindo pixels de pele nas duas rotações.

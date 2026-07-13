@@ -51,6 +51,10 @@ cd /d/Projetos/Laleo/backend && export JAVA_HOME="/c/Program Files/Java/jdk-17.0
 - `models/lala.vrm` (Vita) e `models/leo.vrm` (Sendagaya Shibu) — VRoid beta samples, **CC0**,
   de `madjin/vrm-samples`. Perfis avatar+voz em `frontend/src/avatar/perfis.ts` (Laleo = Lala + Leo);
   a voz da Lala é o faber com playbackRate 1.18 (Piper não tem voz feminina pt-BR)
+- `animacoes/idle.vrma` — animação idle profissional (**MIT**, pixiv/ChatVRM), tocada via
+  `@pixiv/three-vrm-animation` + AnimationMixer; comemoração continua procedural (fade do mixer).
+  Novos `.vrma` (ex.: os 7 oficiais do VRoid Hub, que exigem login para baixar) podem ser
+  colocados nesta pasta e mapeados por estado no Avatar.tsx
 - `ort/` — onnxruntime-web **1.18.0** WASM (a versão precisa casar com a resolvida no package-lock;
   é peerDependency do piper-tts-web e está fixada no package.json por isso)
 - `piper/` — piper_phonemize WASM/data (de `@diffusionstudio/piper-wasm`)

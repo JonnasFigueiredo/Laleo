@@ -2,6 +2,11 @@ import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { VRMLoaderPlugin, VRMUtils, type VRM } from '@pixiv/three-vrm'
+import {
+  createVRMAnimationClip,
+  VRMAnimationLoaderPlugin,
+  type VRMAnimation,
+} from '@pixiv/three-vrm-animation'
 import { criarLale, type Lale } from './criarLale'
 import type { EstadoAvatar } from '../types'
 
@@ -45,6 +50,9 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
     let fallback: Lale | null = null
     let bracoEsq: THREE.Object3D | null = null
     let bracoDir: THREE.Object3D | null = null
+    let mixer: THREE.AnimationMixer | null = null
+    let acaoIdle: THREE.AnimationAction | null = null
+    let pesoAnimacao = 1
     let descartado = false
 
     // O VRM entra dentro deste grupo: o giro para encarar a câmera fica no
@@ -90,11 +98,31 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
         if (bracoDir) bracoDir.rotation.z = -1.15
 
         enquadrar(vrm.scene)
+        void carregarAnimacaoIdle(vrm)
       })
       .catch((e) => {
         console.warn('VRM não carregou, usando avatar procedural:', e)
         if (!descartado) usarFallback()
       })
+
+    // Animação profissional de "parado respirando" (idle_loop.vrma, MIT —
+    // pixiv/ChatVRM). Se não carregar, o loop procedural continua sozinho.
+    // Outras animações .vrma podem ser colocadas em public/animacoes/.
+    const carregarAnimacaoIdle = async (modeloVrm: VRM) => {
+      try {
+        const loaderAnim = new GLTFLoader()
+        loaderAnim.register((parser) => new VRMAnimationLoaderPlugin(parser))
+        const gltfAnim = await loaderAnim.loadAsync('/animacoes/idle.vrma')
+        const animacao = gltfAnim.userData.vrmAnimations?.[0] as VRMAnimation | undefined
+        if (!animacao || descartado) return
+        const clipe = createVRMAnimationClip(animacao, modeloVrm)
+        mixer = new THREE.AnimationMixer(modeloVrm.scene)
+        acaoIdle = mixer.clipAction(clipe)
+        acaoIdle.play()
+      } catch (e) {
+        console.warn('Animação idle não carregou; usando movimento procedural:', e)
+      }
+    }
 
     const redimensionar = () => {
       const { clientWidth: w, clientHeight: h } = container
@@ -142,15 +170,27 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
 
         raiz.position.y = 0
         raiz.rotation.set(0, GIRO_FRENTE, 0)
-        if (cabeca) cabeca.rotation.set(0, 0, 0)
-        // Braços relaxados por padrão; a comemoração os levanta
-        if (bracoEsq) bracoEsq.rotation.z = 1.15
-        if (bracoDir) bracoDir.rotation.z = -1.15
         setExpressao('happy', 0)
 
+        // A animação idle (VRMA) dirige corpo/braços/cabeça; na comemoração
+        // ela cede lugar com fade e o procedural assume
+        const animando = acaoIdle !== null
+        const alvoPeso = est === 'comemorando' ? 0 : 1
+        pesoAnimacao += (alvoPeso - pesoAnimacao) * Math.min(1, delta * 5)
+        if (animando) {
+          acaoIdle!.setEffectiveWeight(pesoAnimacao)
+          mixer!.update(delta)
+        } else {
+          // Sem animação: pose procedural de sempre
+          if (cabeca) cabeca.rotation.set(0, 0, 0)
+          if (bracoEsq) bracoEsq.rotation.z = 1.15
+          if (bracoDir) bracoDir.rotation.z = -1.15
+        }
+
         if (est === 'falando') {
-          if (cabeca) cabeca.rotation.x = Math.sin(t * 2.2) * 0.04
+          if (!animando && cabeca) cabeca.rotation.x = Math.sin(t * 2.2) * 0.04
         } else if (est === 'ouvindo') {
+          // Inclinação aplicada depois do mixer: sobrepõe a animação
           if (cabeca) {
             cabeca.rotation.z = 0.14
             cabeca.rotation.x = 0.08
@@ -166,7 +206,7 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
           if (bracoDir) bracoDir.rotation.z = -balanco
           if (cabeca) cabeca.rotation.x = -0.08
           setExpressao('happy', 1)
-        } else {
+        } else if (!animando) {
           raiz.rotation.y = GIRO_FRENTE + Math.sin(t * 0.6) * 0.06
           if (cabeca) cabeca.rotation.x = Math.sin(t * 1.4) * 0.02
         }

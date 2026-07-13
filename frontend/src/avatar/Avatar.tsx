@@ -32,7 +32,8 @@ export function Avatar({ estado, getNivelAudio }: Props) {
     const cena = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100)
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    // preserveDrawingBuffer permite capturar o canvas (foto com o Lalê / debug)
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     container.appendChild(renderer.domElement)
 
@@ -43,6 +44,12 @@ export function Avatar({ estado, getNivelAudio }: Props) {
     let vrm: VRM | null = null
     let fallback: Lale | null = null
     let descartado = false
+
+    // O VRM entra dentro deste grupo: o giro para encarar a câmera fica no
+    // grupo e o loop de animação nunca o sobrescreve
+    const suporte = new THREE.Group()
+    cena.add(suporte)
+    const GIRO_FRENTE = Math.PI
 
     // Enquadra a câmera na cabeça do modelo (funciona para qualquer VRM)
     const enquadrar = (alturaCabeca: number) => {
@@ -64,9 +71,7 @@ export function Avatar({ estado, getNivelAudio }: Props) {
       .then((gltf) => {
         if (descartado) return
         vrm = gltf.userData.vrm as VRM
-        // Nada de rotateVRM0 aqui: o Vita (VRM 0.x) já encara a câmera em +Z;
-        // a rotação o deixava de costas
-        cena.add(vrm.scene)
+        suporte.add(vrm.scene)
 
         // Sai da T-pose: braços relaxados ao lado do corpo
         const bEsq = vrm.humanoid.getNormalizedBoneNode('leftUpperArm')
@@ -112,7 +117,7 @@ export function Avatar({ estado, getNivelAudio }: Props) {
       const est = estadoRef.current
 
       if (vrm) {
-        const raiz = vrm.scene
+        const raiz = suporte
         const cabeca = vrm.humanoid.getNormalizedBoneNode('head')
 
         // Boca: amplitude real do áudio quando disponível; senão ritmo sintético
@@ -131,7 +136,7 @@ export function Avatar({ estado, getNivelAudio }: Props) {
         setExpressao('blink', fasePiscada > 3.0 ? Math.sin(((fasePiscada - 3.0) / 0.2) * Math.PI) : 0)
 
         raiz.position.y = 0
-        raiz.rotation.set(0, 0, 0)
+        raiz.rotation.set(0, GIRO_FRENTE, 0)
         if (cabeca) cabeca.rotation.set(0, 0, 0)
         setExpressao('happy', 0)
 
@@ -145,10 +150,10 @@ export function Avatar({ estado, getNivelAudio }: Props) {
           setExpressao('happy', 0.25)
         } else if (est === 'comemorando') {
           raiz.position.y = Math.abs(Math.sin(t * 5.5)) * 0.12
-          raiz.rotation.y = Math.sin(t * 3) * 0.12
+          raiz.rotation.y = GIRO_FRENTE + Math.sin(t * 3) * 0.12
           setExpressao('happy', 1)
         } else {
-          raiz.rotation.y = Math.sin(t * 0.6) * 0.06
+          raiz.rotation.y = GIRO_FRENTE + Math.sin(t * 0.6) * 0.06
           if (cabeca) cabeca.rotation.x = Math.sin(t * 1.4) * 0.02
         }
 

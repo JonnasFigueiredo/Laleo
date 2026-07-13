@@ -1,5 +1,5 @@
 import { gravacaoParaWav } from './fala/paraWav'
-import type { AnaliseFala, Exercicio } from './types'
+import type { AnaliseFala, Exercicio, ResultadoResposta } from './types'
 
 export async function listarExercicios(): Promise<Exercicio[]> {
   const res = await fetch('/api/exercicios')
@@ -23,5 +23,18 @@ export async function enviarTentativa(
     ;(erro as Error & { status?: number }).status = res.status
     throw erro
   }
+  return res.json()
+}
+
+export async function enviarResposta(
+  exercicioId: number,
+  escolha: string,
+): Promise<ResultadoResposta> {
+  const res = await fetch(`/api/exercicios/${exercicioId}/respostas`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ escolha }),
+  })
+  if (!res.ok) throw new Error(`Erro ao enviar resposta: ${res.status}`)
   return res.json()
 }

@@ -111,3 +111,67 @@
     box-shadow: 0 0 0 14px rgba(255, 107, 138, 0);
   }
 }
+
+.opcoes {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.cartao-opcao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: 3px solid #efeaff;
+  border-radius: 20px;
+  background: #faf8ff;
+  padding: 18px 22px;
+  min-width: 120px;
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.15s ease;
+}
+
+.cartao-opcao:active {
+  transform: scale(0.95);
+}
+
+.cartao-opcao:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.opcao-emoji {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.opcao-palavra {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #4a3a7a;
+}
+
+.sequencia-escuta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.palavra-escuta {
+  font-size: 1.2rem;
+  color: #b3a1ff;
+  padding: 6px 12px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.palavra-escuta.ativa {
+  color: #ffffff;
+  background: #7c5cff;
+  transform: scale(1.15);
+  font-weight: 700;
+}

@@ -1,13 +1,16 @@
 package app.laleo.exercicio;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 /**
- * Um exercício de "ouça e repita": o avatar fala a palavra e a criança repete.
- * O fonema alvo é o som em treino (ex.: "R", "S", "CH", "LH").
+ * Um exercício de fala. O tipo define a interação (ver docs/metodologia.md):
+ * ouça-e-repita usa só palavra/dica; os tipos de escolha (pares mínimos, rima)
+ * usam opcoes + respostaCorreta; escuta usa opcoes como sequência de palavras.
  */
 @Entity
 public class Exercicio {
@@ -26,14 +29,34 @@ public class Exercicio {
     /** Dica lúdica que o avatar fala antes do exercício. */
     private String dica;
 
+    @Enumerated(EnumType.STRING)
+    private TipoExercicio tipo;
+
+    /**
+     * Para PARES_MINIMOS/RIMA: cartões "palavra|emoji" separados por ';'
+     * (ex.: "rato|🐀;pato|🦆"). Para ESCUTA: palavras da sequência separadas por ';'.
+     */
+    private String opcoes;
+
+    /** Palavra correta nos tipos de escolha; null nos demais. */
+    private String respostaCorreta;
+
     protected Exercicio() {
     }
 
     public Exercicio(String palavra, String fonemaAlvo, int dificuldade, String dica) {
+        this(palavra, fonemaAlvo, dificuldade, dica, TipoExercicio.OUCA_E_REPITA, null, null);
+    }
+
+    public Exercicio(String palavra, String fonemaAlvo, int dificuldade, String dica,
+            TipoExercicio tipo, String opcoes, String respostaCorreta) {
         this.palavra = palavra;
         this.fonemaAlvo = fonemaAlvo;
         this.dificuldade = dificuldade;
         this.dica = dica;
+        this.tipo = tipo;
+        this.opcoes = opcoes;
+        this.respostaCorreta = respostaCorreta;
     }
 
     public Long getId() {
@@ -54,5 +77,17 @@ public class Exercicio {
 
     public String getDica() {
         return dica;
+    }
+
+    public TipoExercicio getTipo() {
+        return tipo;
+    }
+
+    public String getOpcoes() {
+        return opcoes;
+    }
+
+    public String getRespostaCorreta() {
+        return respostaCorreta;
     }
 }

@@ -1,6 +1,7 @@
 # Java / Maven
 target/
 tools/
+dados/
 *.class
 .mvn/wrapper/maven-wrapper.jar
 

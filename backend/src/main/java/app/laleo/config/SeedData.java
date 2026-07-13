@@ -13,6 +13,10 @@ import app.laleo.exercicio.TipoExercicio;
  * Exercícios iniciais cobrindo os fonemas que mais desafiam crianças em pt-BR,
  * nas quatro interações de docs/metodologia.md.
  * TODO: revisar palavras, pares e progressão com fonoaudiólogo(a).
+ *
+ * ATENÇÃO: com o banco em arquivo, o seed só roda quando a tabela está vazia.
+ * Exercícios novos adicionados aqui NÃO aparecem em bancos existentes —
+ * apague a pasta backend/dados/ (perde o progresso) ou crie uma migração.
  */
 @Configuration
 @Profile("!test")

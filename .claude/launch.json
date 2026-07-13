@@ -13,6 +13,12 @@
       "runtimeExecutable": "tools/apache-maven-3.9.16/bin/mvn",
       "runtimeArgs": ["-q", "-f", "backend/pom.xml", "spring-boot:run"],
       "port": 8081
+    },
+    {
+      "name": "speech-service",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start", "--prefix", "speech-service"],
+      "port": 8090
     }
   ]
 }

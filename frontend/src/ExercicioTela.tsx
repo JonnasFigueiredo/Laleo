@@ -62,9 +62,16 @@ export function ExercicioTela() {
           ? ELOGIOS[Math.floor(Math.random() * ELOGIOS.length)]
           : INCENTIVOS[Math.floor(Math.random() * INCENTIVOS.length)]
       falar(frase)
-    } catch {
-      setFase('erro')
-      setMensagem('Ops, algo deu errado na análise. Vamos tentar de novo?')
+    } catch (e) {
+      const status = (e as Error & { status?: number }).status
+      if (status === 400 || status === 422) {
+        // Não ouviu direito: sem tela de erro, o Lalê só pede de novo
+        setFase('pronto')
+        falar('Não consegui te ouvir direitinho. Vamos tentar mais uma vez?')
+      } else {
+        setFase('erro')
+        setMensagem('Ops, algo deu errado na análise. Vamos tentar de novo?')
+      }
     }
   }, [exercicio, falar, parar])
 

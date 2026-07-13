@@ -1,0 +1,13 @@
+{
+  "name": "laleo-speech-service",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node --use-system-ca src/servidor.mjs"
+  },
+  "type": "module",
+  "dependencies": {
+    "@hono/node-server": "^2.0.8",
+    "@huggingface/transformers": "^4.2.0",
+    "hono": "^4.12.30"
+  }
+}

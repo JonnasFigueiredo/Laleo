@@ -1,7 +1,9 @@
 # Contrato do speech-service
 
-Serviço de análise de pronúncia do Laleo. **Ainda não implementado** — em dev o backend usa
-`FalaServiceMock` (mesmo contrato). Este documento é a especificação para a implementação real.
+Serviço de análise de pronúncia do Laleo. **v0 implementada** em Node (`src/servidor.mjs`):
+Whisper-small via transformers.js + pontuação por similaridade (Levenshtein). O backend Java
+chama este serviço quando `laleo.fala.url` está configurada e cai para `FalaServiceMock` se
+o serviço estiver fora do ar. Requer WAV 16-bit (o frontend converte antes de enviar).
 
 ## Princípios
 

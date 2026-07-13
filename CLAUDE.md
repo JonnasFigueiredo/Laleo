@@ -9,7 +9,7 @@ Aplicativo para ajudar crianças (3–10 anos) com dificuldades de fala: exercí
 | Backend | `backend/` | Java 17, Spring Boot 4.1, Maven, H2 (dev) / PostgreSQL (prod) | API REST na porta **8081**, exercícios, progresso, gateway de IA |
 | Frontend | `frontend/` | React + TS + Vite, three.js + @pixiv/three-vrm, Capacitor | Telas, avatar 3D VRM, captura de áudio, PWA + apps mobile |
 | Voz | `frontend/src/fala/` | Piper TTS (`@mintplex-labs/piper-tts-web`), voz `pt_BR-faber-medium` | TTS neural 100% no dispositivo (WASM); fallback speechSynthesis |
-| Serviço de fala | `speech-service/` | A definir (Python/ONNX, conteinerizado) | Transcrição + pontuação de pronúncia por fonema (pt-BR) |
+| Serviço de fala | `speech-service/` | Node + Whisper-small (transformers.js), porta **8090** | v0: transcrição + nota por similaridade; iniciar com `npm start` (usa `--use-system-ca`) |
 | Docs | `docs/` | Markdown | Decisões de arquitetura e pesquisa |
 
 Fluxo principal: criança ouve o avatar demonstrar a palavra → grava repetindo → frontend envia o áudio ao backend → backend chama o speech-service → resultado (nota por fonema) volta e o avatar reage/comemora → progresso persiste.

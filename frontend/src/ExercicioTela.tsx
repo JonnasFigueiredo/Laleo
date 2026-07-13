@@ -22,6 +22,22 @@ function sortear(lista: string[]): string {
   return lista[Math.floor(Math.random() * lista.length)]
 }
 
+/**
+ * Ordena a trilha conforme a metodologia (docs/metodologia.md): para cada
+ * fonema, primeiro escuta (input), depois percepção (pares mínimos), depois
+ * produção (ouça-e-repita) e por fim consciência fonológica (rima).
+ */
+const ORDEM_TIPOS = { ESCUTA: 0, PARES_MINIMOS: 1, OUCA_E_REPITA: 2, RIMA: 3 } as const
+
+function ordenarTrilha(lista: Exercicio[]): Exercicio[] {
+  return [...lista].sort(
+    (a, b) =>
+      a.fonemaAlvo.localeCompare(b.fonemaAlvo) ||
+      ORDEM_TIPOS[a.tipo] - ORDEM_TIPOS[b.tipo] ||
+      a.dificuldade - b.dificuldade,
+  )
+}
+
 export function ExercicioTela() {
   const [exercicios, setExercicios] = useState<Exercicio[]>([])
   const [indice, setIndice] = useState(0)
@@ -43,7 +59,8 @@ export function ExercicioTela() {
 
   useEffect(() => {
     listarExercicios()
-      .then((lista) => {
+      .then((bruto) => {
+        const lista = ordenarTrilha(bruto)
         setExercicios(lista)
         setFase(lista.length > 0 ? 'pronto' : 'erro')
         if (lista.length === 0) setMensagem('Nenhum exercício encontrado. O backend está no ar?')

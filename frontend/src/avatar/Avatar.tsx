@@ -43,6 +43,8 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
 
     let vrm: VRM | null = null
     let fallback: Lale | null = null
+    let bracoEsq: THREE.Object3D | null = null
+    let bracoDir: THREE.Object3D | null = null
     let descartado = false
 
     // O VRM entra dentro deste grupo: o giro para encarar a câmera fica no
@@ -51,10 +53,17 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
     cena.add(suporte)
     const GIRO_FRENTE = Math.PI
 
-    // Enquadra a câmera na cabeça do modelo (funciona para qualquer VRM)
-    const enquadrar = (alturaCabeca: number) => {
-      camera.position.set(0, alturaCabeca + 0.05, 1.35)
-      camera.lookAt(0, alturaCabeca - 0.12, 0)
+    // Enquadra pela caixa real do modelo, com folga em cima para o cabelo
+    // e para o pulo da comemoração — a cabeça nunca sai da tela
+    const FOLGA_TOPO = 0.2
+    const enquadrar = (modelo3d: THREE.Object3D) => {
+      const caixa = new THREE.Box3().setFromObject(modelo3d)
+      const topo = caixa.max.y
+      const centro = topo - 0.45
+      const meiaAltura = topo + FOLGA_TOPO - centro
+      const distancia = meiaAltura / Math.tan(((camera.fov / 2) * Math.PI) / 180)
+      camera.position.set(0, centro + 0.05, distancia)
+      camera.lookAt(0, centro, 0)
     }
 
     const usarFallback = () => {
@@ -73,18 +82,14 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
         vrm = gltf.userData.vrm as VRM
         suporte.add(vrm.scene)
 
-        // Sai da T-pose: braços relaxados ao lado do corpo
-        const bEsq = vrm.humanoid.getNormalizedBoneNode('leftUpperArm')
-        const bDir = vrm.humanoid.getNormalizedBoneNode('rightUpperArm')
-        if (bEsq) bEsq.rotation.z = 1.15
-        if (bDir) bDir.rotation.z = -1.15
+        // Sai da T-pose: braços relaxados (a pose é reaplicada no loop,
+        // porque a comemoração os anima)
+        bracoEsq = vrm.humanoid.getNormalizedBoneNode('leftUpperArm')
+        bracoDir = vrm.humanoid.getNormalizedBoneNode('rightUpperArm')
+        if (bracoEsq) bracoEsq.rotation.z = 1.15
+        if (bracoDir) bracoDir.rotation.z = -1.15
 
-        const cabeca = vrm.humanoid.getNormalizedBoneNode('head')
-        if (cabeca) {
-          const pos = new THREE.Vector3()
-          cabeca.getWorldPosition(pos)
-          enquadrar(pos.y)
-        }
+        enquadrar(vrm.scene)
       })
       .catch((e) => {
         console.warn('VRM não carregou, usando avatar procedural:', e)
@@ -138,6 +143,9 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
         raiz.position.y = 0
         raiz.rotation.set(0, GIRO_FRENTE, 0)
         if (cabeca) cabeca.rotation.set(0, 0, 0)
+        // Braços relaxados por padrão; a comemoração os levanta
+        if (bracoEsq) bracoEsq.rotation.z = 1.15
+        if (bracoDir) bracoDir.rotation.z = -1.15
         setExpressao('happy', 0)
 
         if (est === 'falando') {
@@ -149,8 +157,14 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
           }
           setExpressao('happy', 0.25)
         } else if (est === 'comemorando') {
-          raiz.position.y = Math.abs(Math.sin(t * 5.5)) * 0.12
-          raiz.rotation.y = GIRO_FRENTE + Math.sin(t * 3) * 0.12
+          // Pulinho contido (a folga do enquadramento cobre a amplitude)
+          raiz.position.y = Math.abs(Math.sin(t * 5.5)) * 0.06
+          raiz.rotation.y = GIRO_FRENTE + Math.sin(t * 3) * 0.08
+          // Braços para cima balançando: comemoração de verdade
+          const balanco = 0.55 + Math.sin(t * 7) * 0.25
+          if (bracoEsq) bracoEsq.rotation.z = balanco
+          if (bracoDir) bracoDir.rotation.z = -balanco
+          if (cabeca) cabeca.rotation.x = -0.08
           setExpressao('happy', 1)
         } else {
           raiz.rotation.y = GIRO_FRENTE + Math.sin(t * 0.6) * 0.06

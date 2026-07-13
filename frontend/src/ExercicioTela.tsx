@@ -233,8 +233,9 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
       ) : (
         <div className="cartao">
           <p className="fonema">Som do {exercicio.fonemaAlvo}</p>
+          {exercicio.tipo === 'RIMA' && <p className="pergunta-rima">O que rima com...</p>}
           <h1 className="palavra">
-            {exercicio.tipo === 'RIMA' ? `O que rima com ${exercicio.palavra}?` : exercicio.palavra}
+            {exercicio.tipo === 'RIMA' ? `${exercicio.palavra}?` : exercicio.palavra}
           </h1>
 
           {/* Cartões de escolha: pares mínimos e rima */}

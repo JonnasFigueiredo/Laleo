@@ -44,7 +44,18 @@
 .palavra {
   margin: 8px 0 20px;
   font-size: 2.6rem;
+  line-height: 1.15;
   color: #4a3a7a;
+}
+
+.pergunta-rima {
+  margin: 10px 0 0;
+  font-size: 1.15rem;
+  color: #8a7bc0;
+}
+
+.pergunta-rima + .palavra {
+  margin-top: 0;
 }
 
 .estrelas {

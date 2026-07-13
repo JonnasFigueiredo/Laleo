@@ -3,6 +3,7 @@ import { enviarResposta, enviarTentativa, listarExercicios } from './api'
 import { Avatar } from './avatar/Avatar'
 import { useFala } from './hooks/useFala'
 import { useGravador } from './hooks/useGravador'
+import type { PerfilAvatar } from './avatar/perfis'
 import { parsearOpcoes, type AnaliseFala, type EstadoAvatar, type Exercicio } from './types'
 
 type Fase =
@@ -38,7 +39,11 @@ function ordenarTrilha(lista: Exercicio[]): Exercicio[] {
   )
 }
 
-export function ExercicioTela() {
+interface Props {
+  perfil: PerfilAvatar
+}
+
+export function ExercicioTela({ perfil }: Props) {
   const [exercicios, setExercicios] = useState<Exercicio[]>([])
   const [indice, setIndice] = useState(0)
   const [fase, setFase] = useState<Fase>('carregando')
@@ -193,7 +198,7 @@ export function ExercicioTela() {
           ⭐ {estrelas}
         </div>
       )}
-      <Avatar estado={estadoAvatar} getNivelAudio={getNivelAudio} />
+      <Avatar estado={estadoAvatar} modelo={perfil.modelo} getNivelAudio={getNivelAudio} />
       {statusVoz === 'carregando' && progressoVoz > 0 && progressoVoz < 100 && (
         <p className="status-voz">Preparando a voz do Lalê... {progressoVoz}%</p>
       )}

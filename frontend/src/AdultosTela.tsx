@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { buscarProgresso } from './api'
+import { PERFIS, type PerfilAvatar } from './avatar/perfis'
 import type { Progresso } from './types'
 
 interface Props {
   aoVoltar: () => void
+  perfilAtual: PerfilAvatar
+  aoTrocarPerfil: (perfil: PerfilAvatar) => void
 }
 
 /**
@@ -11,7 +14,7 @@ interface Props {
  * (conta de multiplicação — padrão em apps infantis para impedir que a
  * criança entre sozinha).
  */
-export function AdultosTela({ aoVoltar }: Props) {
+export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil }: Props) {
   const desafio = useMemo(() => {
     const a = 3 + Math.floor(Math.random() * 6)
     const b = 3 + Math.floor(Math.random() * 6)
@@ -72,6 +75,22 @@ export function AdultosTela({ aoVoltar }: Props) {
   return (
     <div className="tela">
       <div className="cartao adultos">
+        <h2>Amiguinho da criança</h2>
+        <p>Escolha quem vai guiar os exercícios — a voz acompanha o personagem.</p>
+        <div className="opcoes">
+          {PERFIS.map((p) => (
+            <button
+              key={p.id}
+              className={p.id === perfilAtual.id ? 'cartao-opcao selecionado' : 'cartao-opcao'}
+              onClick={() => aoTrocarPerfil(p)}
+            >
+              <span className="opcao-emoji">{p.emoji}</span>
+              <span className="opcao-palavra">{p.nome}</span>
+              {p.id === perfilAtual.id && <span className="marca-selecao">✓ escolhido</span>}
+            </button>
+          ))}
+        </div>
+
         <h2>Progresso da criança</h2>
 
         {progresso === null ? (

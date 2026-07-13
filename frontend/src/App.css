@@ -142,6 +142,17 @@
   cursor: default;
 }
 
+.cartao-opcao.selecionado {
+  border-color: #7c5cff;
+  background: #f2edff;
+}
+
+.marca-selecao {
+  font-size: 0.8rem;
+  color: #7c5cff;
+  font-weight: 700;
+}
+
 .opcao-emoji {
   font-size: 3rem;
   line-height: 1;

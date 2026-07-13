@@ -7,18 +7,18 @@ import type { EstadoAvatar } from '../types'
 
 interface Props {
   estado: EstadoAvatar
+  /** Caminho do modelo VRM (ver avatar/perfis.ts). */
+  modelo: string
   /** Nível 0–1 do áudio da fala — dirige a boca (lipsync). */
   getNivelAudio?: () => number
 }
-
-const MODELO_URL = '/models/lale.vrm'
 
 /**
  * O Lalê em VRM (modelo Vita, CC0) com lipsync dirigido pelo áudio real do
  * TTS e expressões por estado. Se o VRM não carregar, cai para o boneco
  * procedural antigo — o app nunca fica sem avatar.
  */
-export function Avatar({ estado, getNivelAudio }: Props) {
+export function Avatar({ estado, modelo, getNivelAudio }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const estadoRef = useRef<EstadoAvatar>(estado)
   estadoRef.current = estado
@@ -67,7 +67,7 @@ export function Avatar({ estado, getNivelAudio }: Props) {
     const loader = new GLTFLoader()
     loader.register((parser) => new VRMLoaderPlugin(parser))
     loader
-      .loadAsync(MODELO_URL)
+      .loadAsync(modelo)
       .then((gltf) => {
         if (descartado) return
         vrm = gltf.userData.vrm as VRM
@@ -187,7 +187,7 @@ export function Avatar({ estado, getNivelAudio }: Props) {
       renderer.dispose()
       container.removeChild(renderer.domElement)
     }
-  }, [])
+  }, [modelo])
 
   return <div ref={containerRef} className="avatar-container" />
 }

@@ -11,6 +11,15 @@ import { TtsSession } from '@mintplex-labs/piper-tts-web'
 
 const VOZ = 'pt_BR-faber-medium'
 
+// Perfil de voz do avatar escolhido (ver avatar/perfis.ts)
+let taxaVoz = 1.0
+let tomFallback = 1.2
+
+export function definirPerfilVoz(taxa: number, tom: number) {
+  taxaVoz = taxa
+  tomFallback = tom
+}
+
 let sessao: TtsSession | null = null
 let carregando: Promise<void> | null = null
 let neuralFalhou = false
@@ -92,6 +101,8 @@ async function falarNeural(texto: string): Promise<void> {
   return new Promise((resolve) => {
     const fonte = ctx.createBufferSource()
     fonte.buffer = buffer
+    // Pitch do avatar: playbackRate > 1 deixa a voz mais aguda (Lala)
+    fonte.playbackRate.value = taxaVoz
     fonte.connect(analyser!)
     fonte.onended = () => {
       tocando = false
@@ -108,7 +119,7 @@ function falarFallback(texto: string): Promise<void> {
     const fala = new SpeechSynthesisUtterance(texto)
     fala.lang = 'pt-BR'
     fala.rate = 0.85
-    fala.pitch = 1.2
+    fala.pitch = tomFallback
     const vozPt = window.speechSynthesis
       .getVoices()
       .find((v) => v.lang.toLowerCase().startsWith('pt'))

@@ -45,7 +45,9 @@ cd /d/Projetos/Laleo/backend && export JAVA_HOME="/c/Program Files/Java/jdk-17.0
 
 ## Assets e binários auto-hospedados (frontend/public/)
 
-- `models/lale.vrm` — modelo "Vita" (VRoid beta samples, **CC0**), baixado de `madjin/vrm-samples`
+- `models/lala.vrm` (Vita) e `models/leo.vrm` (Sendagaya Shibu) — VRoid beta samples, **CC0**,
+  de `madjin/vrm-samples`. Perfis avatar+voz em `frontend/src/avatar/perfis.ts` (Laleo = Lala + Leo);
+  a voz da Lala é o faber com playbackRate 1.18 (Piper não tem voz feminina pt-BR)
 - `ort/` — onnxruntime-web **1.18.0** WASM (a versão precisa casar com a resolvida no package-lock;
   é peerDependency do piper-tts-web e está fixada no package.json por isso)
 - `piper/` — piper_phonemize WASM/data (de `@diffusionstudio/piper-wasm`)

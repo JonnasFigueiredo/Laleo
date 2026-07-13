@@ -64,7 +64,8 @@ export function Avatar({ estado, getNivelAudio }: Props) {
       .then((gltf) => {
         if (descartado) return
         vrm = gltf.userData.vrm as VRM
-        VRMUtils.rotateVRM0(vrm)
+        // Nada de rotateVRM0 aqui: o Vita (VRM 0.x) já encara a câmera em +Z;
+        // a rotação o deixava de costas
         cena.add(vrm.scene)
 
         // Sai da T-pose: braços relaxados ao lado do corpo

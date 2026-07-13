@@ -16,7 +16,7 @@ export function ExercicioTela() {
   const [fase, setFase] = useState<Fase>('carregando')
   const [resultado, setResultado] = useState<AnaliseFala | null>(null)
   const [mensagem, setMensagem] = useState('')
-  const { falar } = useFala()
+  const { falar, statusVoz, progressoVoz, getNivelAudio } = useFala()
   const { gravando, iniciar, parar } = useGravador()
 
   const exercicio = exercicios[indice]
@@ -89,7 +89,10 @@ export function ExercicioTela() {
 
   return (
     <div className="tela">
-      <Avatar estado={estadoAvatar} />
+      <Avatar estado={estadoAvatar} getNivelAudio={getNivelAudio} />
+      {statusVoz === 'carregando' && progressoVoz > 0 && progressoVoz < 100 && (
+        <p className="status-voz">Preparando a voz do Lalê... {progressoVoz}%</p>
+      )}
 
       {fase === 'erro' ? (
         <div className="cartao erro">

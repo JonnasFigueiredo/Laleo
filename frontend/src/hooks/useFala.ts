@@ -1,23 +1,35 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import {
+  aoMudarStatusVoz,
+  falar as falarLale,
+  getNivelAudio,
+  prepararVoz,
+  usandoFallback,
+  type StatusVoz,
+} from '../fala/vozLale'
 
 /**
- * TTS do navegador em pt-BR. Serve para o MVP; depois trocamos por um
- * TTS de qualidade servido pelo backend (gateway de IA).
+ * Voz do Lalê (TTS neural pt-BR no dispositivo, com fallback para a voz
+ * do sistema). O download do modelo começa assim que o app abre, para a
+ * primeira fala já sair com a voz boa.
  */
 export function useFala() {
-  const falar = useCallback((texto: string, aoTerminar?: () => void) => {
-    window.speechSynthesis.cancel()
-    const fala = new SpeechSynthesisUtterance(texto)
-    fala.lang = 'pt-BR'
-    fala.rate = 0.85
-    fala.pitch = 1.2
-    const vozPt = window.speechSynthesis
-      .getVoices()
-      .find((v) => v.lang.toLowerCase().startsWith('pt'))
-    if (vozPt) fala.voice = vozPt
-    if (aoTerminar) fala.onend = aoTerminar
-    window.speechSynthesis.speak(fala)
+  const [statusVoz, setStatusVoz] = useState<StatusVoz>(
+    usandoFallback() ? 'fallback' : 'carregando',
+  )
+  const [progressoVoz, setProgressoVoz] = useState(0)
+
+  useEffect(() => {
+    aoMudarStatusVoz((s, progresso) => {
+      setStatusVoz(s)
+      if (progresso !== undefined) setProgressoVoz(progresso)
+    })
+    void prepararVoz()
   }, [])
 
-  return { falar }
+  const falar = useCallback((texto: string, aoTerminar?: () => void) => {
+    void falarLale(texto).then(() => aoTerminar?.())
+  }, [])
+
+  return { falar, statusVoz, progressoVoz, getNivelAudio }
 }

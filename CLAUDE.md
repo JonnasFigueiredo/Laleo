@@ -8,6 +8,7 @@ Aplicativo para ajudar crianças (3–10 anos) com dificuldades de fala: exercí
 |--------|-------|-------|-------|
 | Backend | `backend/` | Java 17, Spring Boot 4.1, Maven, H2 (dev) / PostgreSQL (prod) | API REST na porta **8081**, exercícios, progresso, gateway de IA |
 | Frontend | `frontend/` | React + TS + Vite, three.js + @pixiv/three-vrm, Capacitor | Telas, avatar 3D VRM, captura de áudio, PWA + apps mobile |
+| Voz | `frontend/src/fala/` | Piper TTS (`@mintplex-labs/piper-tts-web`), voz `pt_BR-faber-medium` | TTS neural 100% no dispositivo (WASM); fallback speechSynthesis |
 | Serviço de fala | `speech-service/` | A definir (Python/ONNX, conteinerizado) | Transcrição + pontuação de pronúncia por fonema (pt-BR) |
 | Docs | `docs/` | Markdown | Decisões de arquitetura e pesquisa |
 
@@ -41,6 +42,16 @@ cd /d/Projetos/Laleo/backend && export JAVA_HOME="/c/Program Files/Java/jdk-17.0
   && export MAVEN_OPTS="-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT" \
   && ../tools/apache-maven-3.9.16/bin/mvn -q verify
 ```
+
+## Assets e binários auto-hospedados (frontend/public/)
+
+- `models/lale.vrm` — modelo "Vita" (VRoid beta samples, **CC0**), baixado de `madjin/vrm-samples`
+- `ort/` — onnxruntime-web **1.18.0** WASM (a versão precisa casar com a resolvida no package-lock;
+  é peerDependency do piper-tts-web e está fixada no package.json por isso)
+- `piper/` — piper_phonemize WASM/data (de `@diffusionstudio/piper-wasm`)
+- A voz (`pt_BR-faber-medium.onnx`, 60 MB) é baixada do HuggingFace no primeiro uso e cacheada
+  em OPFS pelo navegador — não fica no repositório
+- PENDENTE: confirmar licença do dataset da voz "faber" para uso comercial
 
 ## Projetos open source de referência
 

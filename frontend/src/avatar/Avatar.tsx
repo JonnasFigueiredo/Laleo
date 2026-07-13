@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type MutableRefObject } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { VRMLoaderPlugin, VRMUtils, type VRM } from '@pixiv/three-vrm'
@@ -16,12 +16,16 @@ interface Props {
   modelo: string
   /** Nível 0–1 do áudio da fala — dirige a boca (lipsync). */
   getNivelAudio?: () => number
+  /** Chamado quando a criança cutuca o boneco (para reações faladas). */
+  aoCutucar?: () => void
+  /** Recebe uma função para disparar animações de fora (barra de brincadeiras). */
+  comandoRef?: MutableRefObject<((nome: string) => void) | null>
 }
 
 /**
  * Animações profissionais em public/animacoes/ (MIT — pixiv/ChatVRM e
- * tk256ailab/vrm-viewer). Clipes de uma vez só (aceno, olhar) voltam ao
- * idle sozinhos; os demais ficam em loop até o estado mudar.
+ * tk256ailab/vrm-viewer). Clipes de uma vez só voltam ao idle com
+ * crossfade suave quando terminam.
  */
 const CLIPES: Record<string, string> = {
   idle: '/animacoes/idle.vrma',
@@ -30,22 +34,28 @@ const CLIPES: Record<string, string> = {
   palmas: '/animacoes/palmas.vrma',
   olhar: '/animacoes/olhar.vrma',
   pensar: '/animacoes/pensar.vrma',
+  surpresa: '/animacoes/surpresa.vrma',
+  vergonha: '/animacoes/vergonha.vrma',
+  soneca: '/animacoes/soneca.vrma',
 }
-const CLIPES_UMA_VEZ = new Set(['acenar', 'olhar'])
+const CLIPES_UMA_VEZ = new Set(['acenar', 'olhar', 'surpresa', 'vergonha'])
 const COMEMORACOES = ['pular', 'palmas']
+const REACOES_CUTUCAO = ['surpresa', 'vergonha']
+const SEGUNDOS_ATE_SONECA = 45
 
 /**
  * O avatar do Laleo: modelo VRM + animações VRMA com transições suaves.
- * Boca (lipsync pela amplitude do áudio) e piscada continuam procedurais
- * por cima das animações. Sem os arquivos, cai para o movimento
- * procedural; sem o VRM, cai para o boneco primitivo.
+ * Interativo: cutucar o boneco gera reação; muito tempo parado, ele
+ * cochila. Boca (lipsync) e piscada continuam procedurais por cima.
  */
-export function Avatar({ estado, modelo, getNivelAudio }: Props) {
+export function Avatar({ estado, modelo, getNivelAudio, aoCutucar, comandoRef }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const estadoRef = useRef<EstadoAvatar>(estado)
   estadoRef.current = estado
   const nivelRef = useRef<(() => number) | undefined>(getNivelAudio)
   nivelRef.current = getNivelAudio
+  const cutucarRef = useRef<(() => void) | undefined>(aoCutucar)
+  cutucarRef.current = aoCutucar
 
   useEffect(() => {
     const container = containerRef.current
@@ -69,8 +79,11 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
     let mixer: THREE.AnimationMixer | null = null
     const acoes: Record<string, THREE.AnimationAction> = {}
     let acaoAtual = ''
+    let umaVezRodando = false
     let comemoracao = 0
     let proximoOlhar = 14
+    let ultimaInteracao = 0
+    let reacao = 0
     let descartado = false
 
     // O VRM entra dentro deste grupo: o giro para encarar a câmera fica no
@@ -94,19 +107,35 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
       camera.lookAt(0, 0, 0)
     }
 
-    const tocar = (nome: string) => {
+    /**
+     * Troca de animação SEMPRE com crossfade (warp suaviza a diferença de
+     * ritmo entre os clipes). umaVez força o clipe a rodar uma única vez
+     * e voltar ao idle — o retorno também é suavizado (ver 'finished').
+     */
+    const tocar = (nome: string, umaVez = false) => {
       const proxima = acoes[nome]
       if (!proxima || nome === acaoAtual) return
       const anterior = acoes[acaoAtual]
+
       proxima.reset()
-      if (CLIPES_UMA_VEZ.has(nome)) {
+      proxima.enabled = true
+      proxima.setEffectiveTimeScale(1)
+      proxima.setEffectiveWeight(1)
+      if (umaVez || CLIPES_UMA_VEZ.has(nome)) {
         proxima.setLoop(THREE.LoopOnce, 1)
         proxima.clampWhenFinished = true
+        umaVezRodando = true
       } else {
         proxima.setLoop(THREE.LoopRepeat, Infinity)
+        umaVezRodando = false
       }
       proxima.play()
-      if (anterior) anterior.crossFadeTo(proxima, 0.35, false)
+
+      if (anterior && anterior !== proxima) {
+        anterior.crossFadeTo(proxima, 0.45, true)
+      } else {
+        proxima.fadeIn(0.45)
+      }
       acaoAtual = nome
     }
 
@@ -131,6 +160,7 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
           cabeca.getWorldPosition(pos)
           if (pos.y > maxCabeca) maxCabeca = pos.y
         }
+        acao.stop()
       }
       mixer.stopAllAction()
       return maxCabeca + folgaCabelo
@@ -156,12 +186,24 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
 
       enquadrar(medirTopoMaximo(modeloVrm, topoRepouso))
 
+      // Fim de clipe de uma vez: volta ao idle com crossfade — nunca
+      // congela no último quadro (era a causa do "para do nada")
+      mixer!.addEventListener('finished', (evento) => {
+        if (descartado) return
+        umaVezRodando = false
+        const idle = acoes.idle
+        const terminada = (evento as unknown as { action: THREE.AnimationAction }).action
+        if (!idle || terminada === idle) return
+        idle.reset()
+        idle.setLoop(THREE.LoopRepeat, Infinity)
+        idle.setEffectiveWeight(1)
+        idle.play()
+        terminada.crossFadeTo(idle, 0.5, true)
+        acaoAtual = 'idle'
+      })
+
       // Entrada simpática: acena e depois fica de boa
       tocar(acoes.acenar ? 'acenar' : 'idle')
-      mixer!.addEventListener('finished', () => {
-        acaoAtual = ''
-        tocar('idle')
-      })
     }
 
     const loader = new GLTFLoader()
@@ -207,6 +249,38 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
     let bocaSuave = 0
     let idAnimacao = 0
 
+    // Cutucar o boneco: raycast no clique → reação de surpresa/vergonha
+    const raycaster = new THREE.Raycaster()
+    const ponto = new THREE.Vector2()
+    const aoClicar = (evento: PointerEvent) => {
+      if (!vrm || !mixer) return
+      const area = renderer.domElement.getBoundingClientRect()
+      ponto.x = ((evento.clientX - area.left) / area.width) * 2 - 1
+      ponto.y = -((evento.clientY - area.top) / area.height) * 2 + 1
+      raycaster.setFromCamera(ponto, camera)
+      if (raycaster.intersectObject(vrm.scene, true).length === 0) return
+
+      const est = estadoRef.current
+      if (est !== 'idle') return // não atrapalha exercício/gravação
+      ultimaInteracao = t
+      reacao = (reacao + 1) % REACOES_CUTUCAO.length
+      const nome = REACOES_CUTUCAO[reacao]
+      if (acoes[nome]) {
+        tocar(nome)
+        cutucarRef.current?.()
+      }
+    }
+    renderer.domElement.addEventListener('pointerdown', aoClicar)
+
+    // Barra de brincadeiras: dispara qualquer clipe uma vez e volta ao idle
+    if (comandoRef) {
+      comandoRef.current = (nome: string) => {
+        if (estadoRef.current !== 'idle' || !acoes[nome]) return
+        ultimaInteracao = t
+        tocar(nome, true)
+      }
+    }
+
     const animar = () => {
       idAnimacao = requestAnimationFrame(animar)
       const delta = relogio.getDelta()
@@ -236,9 +310,10 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
         raiz.rotation.set(0, GIRO_FRENTE, 0)
         setExpressao('happy', 0)
 
+        if (est !== 'idle') ultimaInteracao = t
+
         const animando = acaoAtual !== '' && mixer !== null
         if (animando) {
-          // Escolhe o clipe pelo estado; comemoração alterna pulo/palmas
           if (est === 'comemorando') {
             if (!COMEMORACOES.includes(acaoAtual)) {
               comemoracao = (comemoracao + 1) % COMEMORACOES.length
@@ -247,12 +322,18 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
             setExpressao('happy', 1)
           } else if (est === 'pensando') {
             tocar(acoes.pensar ? 'pensar' : 'idle')
-          } else if (acaoAtual !== 'acenar' && acaoAtual !== 'olhar') {
-            tocar('idle')
-            // De vez em quando, olha ao redor curiosa
-            if (est === 'idle' && t > proximoOlhar) {
-              proximoOlhar = t + 14 + Math.random() * 8
-              if (acoes.olhar) tocar('olhar')
+          } else if (!umaVezRodando) {
+            // idle / falando / ouvindo — deixa clipes de uma vez terminarem
+            if (est === 'idle' && t - ultimaInteracao > SEGUNDOS_ATE_SONECA) {
+              tocar(acoes.soneca ? 'soneca' : 'idle')
+            } else if (acaoAtual === 'soneca' && t - ultimaInteracao <= SEGUNDOS_ATE_SONECA) {
+              tocar('idle') // acordou!
+            } else if (acaoAtual !== 'soneca') {
+              tocar('idle')
+              if (est === 'idle' && t > proximoOlhar) {
+                proximoOlhar = t + 14 + Math.random() * 8
+                if (acoes.olhar) tocar('olhar')
+              }
             }
           }
           mixer!.update(delta)
@@ -262,6 +343,9 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
             cabeca.rotation.z = 0.14
             cabeca.rotation.x = 0.08
             setExpressao('happy', 0.25)
+          }
+          if (acaoAtual === 'soneca') {
+            setExpressao('blink', 1) // olhinhos fechados dormindo
           }
         } else {
           // Sem animações: movimento procedural de reserva
@@ -313,13 +397,15 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
 
     return () => {
       descartado = true
+      if (comandoRef) comandoRef.current = null
       cancelAnimationFrame(idAnimacao)
       observer.disconnect()
+      renderer.domElement.removeEventListener('pointerdown', aoClicar)
       if (vrm) VRMUtils.deepDispose(vrm.scene)
       renderer.dispose()
       container.removeChild(renderer.domElement)
     }
-  }, [modelo])
+  }, [modelo, comandoRef])
 
   return <div ref={containerRef} className="avatar-container" />
 }

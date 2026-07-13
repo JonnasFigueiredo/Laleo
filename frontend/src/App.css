@@ -17,6 +17,33 @@
 .avatar-container {
   width: min(70vw, 320px);
   height: min(50vh, 320px);
+  cursor: pointer;
+}
+
+.brincadeiras {
+  display: flex;
+  gap: 10px;
+  margin-top: -6px;
+}
+
+.botao-brincadeira {
+  border: none;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 14px;
+  font-size: 1.4rem;
+  padding: 8px 12px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(90, 70, 160, 0.14);
+  transition: transform 0.1s ease;
+}
+
+.botao-brincadeira:active {
+  transform: scale(0.9);
+}
+
+.botao-brincadeira:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .cartao {

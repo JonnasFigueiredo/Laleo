@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { enviarResposta, enviarTentativa, listarExercicios } from './api'
 import { Avatar } from './avatar/Avatar'
 import { FigurinhaModal } from './FigurinhaModal'
@@ -26,6 +26,14 @@ type Fase =
 
 const ELOGIOS = ['Muito bem!', 'Uau, que capricho!', 'Você é demais!', 'Mandou bem!']
 const INCENTIVOS = ['Quase lá! Vamos tentar de novo?', 'Boa tentativa! Uma vez mais?']
+const REACOES_CUTUCAO = ['Hihi, isso faz cócegas!', 'Uii, que susto!', 'Ai ai, hihihi!', 'Opa! Você me achou!']
+
+const BRINCADEIRAS: Array<{ emoji: string; nome: string; rotulo: string }> = [
+  { emoji: '👋', nome: 'acenar', rotulo: 'Acenar' },
+  { emoji: '🤸', nome: 'pular', rotulo: 'Pular' },
+  { emoji: '👏', nome: 'palmas', rotulo: 'Palmas' },
+  { emoji: '😴', nome: 'soneca', rotulo: 'Soneca' },
+]
 
 function sortear(lista: string[]): string {
   return lista[Math.floor(Math.random() * lista.length)]
@@ -65,6 +73,11 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
   const [mensagem, setMensagem] = useState('')
   const { falar, statusVoz, progressoVoz, getNivelAudio } = useFala()
   const { gravando, iniciar, parar } = useGravador()
+  const comandoAvatar = useRef<((nome: string) => void) | null>(null)
+
+  const cutucado = useCallback(() => {
+    falar(REACOES_CUTUCAO[Math.floor(Math.random() * REACOES_CUTUCAO.length)])
+  }, [falar])
 
   const exercicio = exercicios[indice]
   const opcoes = exercicio ? parsearOpcoes(exercicio) : []
@@ -218,7 +231,26 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
         {crianca.emoji} ⭐ {estrelas}
       </div>
       {figurinha && <FigurinhaModal figurinha={figurinha} aoFechar={() => setFigurinha(null)} />}
-      <Avatar estado={estadoAvatar} modelo={perfil.modelo} getNivelAudio={getNivelAudio} />
+      <Avatar
+        estado={estadoAvatar}
+        modelo={perfil.modelo}
+        getNivelAudio={getNivelAudio}
+        aoCutucar={cutucado}
+        comandoRef={comandoAvatar}
+      />
+      <div className="brincadeiras" aria-label="Brincadeiras com o amiguinho">
+        {BRINCADEIRAS.map((b) => (
+          <button
+            key={b.nome}
+            className="botao-brincadeira"
+            title={b.rotulo}
+            disabled={fase !== 'pronto'}
+            onClick={() => comandoAvatar.current?.(b.nome)}
+          >
+            {b.emoji}
+          </button>
+        ))}
+      </div>
       {statusVoz === 'carregando' && progressoVoz > 0 && progressoVoz < 100 && (
         <p className="status-voz">Preparando a voz do Lalê... {progressoVoz}%</p>
       )}

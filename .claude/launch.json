@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "frontend",
+      "port": 5173
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "tools/apache-maven-3.9.16/bin/mvn",
+      "runtimeArgs": ["-q", "-f", "backend/pom.xml", "spring-boot:run"],
+      "port": 8081
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+# Java / Maven
+target/
+tools/
+*.class
+.mvn/wrapper/maven-wrapper.jar
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Capacitor
+frontend/android/
+frontend/ios/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Ambiente / segredos
+.env
+.env.*
+*.local
+
+# Claude Code (overrides pessoais)
+.claude/settings.local.json
+
+# SO
+Thumbs.db
+.DS_Store

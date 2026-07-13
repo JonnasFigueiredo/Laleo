@@ -1,0 +1,44 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Edit",
+      "Write",
+      "WebSearch",
+      "WebFetch",
+      "Bash(git *)",
+      "Bash(mvn *)",
+      "Bash(./mvnw *)",
+      "Bash(mvnw *)",
+      "Bash(gradle *)",
+      "Bash(./gradlew *)",
+      "Bash(java *)",
+      "Bash(javac *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(node *)",
+      "Bash(pnpm *)",
+      "Bash(mkdir *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(touch *)",
+      "Bash(echo *)",
+      "Bash(which *)",
+      "Bash(jq *)",
+      "Bash(unzip *)",
+      "Bash(tar *)",
+      "Bash(python *)",
+      "Bash(pip *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)"
+    ]
+  }
+}

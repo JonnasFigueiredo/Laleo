@@ -176,7 +176,22 @@ export function Avatar({ estado, modelo, getNivelAudio, aoCutucar, comandoRef }:
           try {
             const gltf = await loaderAnim.loadAsync(caminho)
             const anim = gltf.userData.vrmAnimations?.[0] as VRMAnimation | undefined
-            if (anim && mixer) acoes[nome] = mixer.clipAction(createVRMAnimationClip(anim, modeloVrm))
+            if (anim && mixer) {
+              const clipe = createVRMAnimationClip(anim, modeloVrm)
+              // Remove o deslocamento LATERAL da raiz (vários clipes andam de
+              // lado e o boneco sai do centro da câmera); o vertical fica,
+              // que é o que o pulo usa
+              for (const trilha of clipe.tracks) {
+                if (trilha.name.endsWith('.position')) {
+                  const v = trilha.values
+                  for (let i = 3; i < v.length; i += 3) {
+                    v[i] = v[0]
+                    v[i + 2] = v[2]
+                  }
+                }
+              }
+              acoes[nome] = mixer.clipAction(clipe)
+            }
           } catch {
             console.warn(`Animação ${nome} não carregou (${caminho})`)
           }

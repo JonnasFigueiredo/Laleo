@@ -178,15 +178,17 @@ export function Avatar({ estado, modelo, getNivelAudio, aoCutucar, comandoRef }:
             const anim = gltf.userData.vrmAnimations?.[0] as VRMAnimation | undefined
             if (anim && mixer) {
               const clipe = createVRMAnimationClip(anim, modeloVrm)
-              // Remove o deslocamento LATERAL da raiz (vários clipes andam de
-              // lado e o boneco sai do centro da câmera); o vertical fica,
-              // que é o que o pulo usa
+              // Trava a raiz no centro horizontal. Cada clipe VRMA (convertido
+              // de Mixamo) tem um deslocamento lateral próprio — a idle, por
+              // exemplo, fica fixa em X≈0.17. Zerar X e Z de TODOS os quadros
+              // (o Y, do pulo, fica) mantém o quadril sempre centrado, então
+              // ao trocar de animação o boneco não escorrega para o lado.
               for (const trilha of clipe.tracks) {
                 if (trilha.name.endsWith('.position')) {
                   const v = trilha.values
-                  for (let i = 3; i < v.length; i += 3) {
-                    v[i] = v[0]
-                    v[i + 2] = v[2]
+                  for (let i = 0; i < v.length; i += 3) {
+                    v[i] = 0
+                    v[i + 2] = 0
                   }
                 }
               }

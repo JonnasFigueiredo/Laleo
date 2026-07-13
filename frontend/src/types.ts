@@ -42,4 +42,15 @@ export interface ResultadoResposta {
   respostaCorreta: string
 }
 
+export interface ProgressoFonema {
+  fonema: string
+  tentativas: number
+  notaMedia: number
+}
+
+export interface Progresso {
+  totalTentativas: number
+  porFonema: ProgressoFonema[]
+}
+
 export type EstadoAvatar = 'idle' | 'falando' | 'ouvindo' | 'comemorando'

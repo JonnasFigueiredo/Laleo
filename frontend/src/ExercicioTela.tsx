@@ -45,6 +45,7 @@ export function ExercicioTela() {
   const [resultado, setResultado] = useState<AnaliseFala | null>(null)
   const [acertou, setAcertou] = useState<boolean | null>(null)
   const [palavraDestacada, setPalavraDestacada] = useState<string | null>(null)
+  const [estrelas, setEstrelas] = useState(0)
   const [mensagem, setMensagem] = useState('')
   const { falar, statusVoz, progressoVoz, getNivelAudio } = useFala()
   const { gravando, iniciar, parar } = useGravador()
@@ -101,6 +102,7 @@ export function ExercicioTela() {
       const analise = await enviarTentativa(exercicio.id, audio)
       setResultado(analise)
       setFase('resultado')
+      if (analise.notaGeral >= 70) setEstrelas((n) => n + 1)
       falar(analise.notaGeral >= 70 ? sortear(ELOGIOS) : sortear(INCENTIVOS))
     } catch (e) {
       const status = (e as Error & { status?: number }).status
@@ -124,6 +126,7 @@ export function ExercicioTela() {
         setAcertou(r.correta)
         setFase('resultado')
         if (r.correta) {
+          setEstrelas((n) => n + 1)
           falar(sortear(ELOGIOS))
         } else {
           falar(`Quase! A resposta certa é ${r.respostaCorreta}. Vamos ouvir de novo?`)
@@ -185,6 +188,11 @@ export function ExercicioTela() {
 
   return (
     <div className="tela">
+      {estrelas > 0 && (
+        <div className="estrelas-sessao" aria-label={`${estrelas} estrelas ganhas`}>
+          ⭐ {estrelas}
+        </div>
+      )}
       <Avatar estado={estadoAvatar} getNivelAudio={getNivelAudio} />
       {statusVoz === 'carregando' && progressoVoz > 0 && progressoVoz < 100 && (
         <p className="status-voz">Preparando a voz do Lalê... {progressoVoz}%</p>

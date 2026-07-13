@@ -1,5 +1,5 @@
 import { gravacaoParaWav } from './fala/paraWav'
-import type { AnaliseFala, Exercicio, ResultadoResposta } from './types'
+import type { AnaliseFala, Exercicio, Progresso, ResultadoResposta } from './types'
 
 export async function listarExercicios(): Promise<Exercicio[]> {
   const res = await fetch('/api/exercicios')
@@ -36,5 +36,11 @@ export async function enviarResposta(
     body: JSON.stringify({ escolha }),
   })
   if (!res.ok) throw new Error(`Erro ao enviar resposta: ${res.status}`)
+  return res.json()
+}
+
+export async function buscarProgresso(): Promise<Progresso> {
+  const res = await fetch('/api/progresso')
+  if (!res.ok) throw new Error(`Erro ao buscar progresso: ${res.status}`)
   return res.json()
 }

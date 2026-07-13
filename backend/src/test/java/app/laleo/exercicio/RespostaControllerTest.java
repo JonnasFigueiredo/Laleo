@@ -27,8 +27,8 @@ class RespostaControllerTest {
         Exercicio par = exercicios.save(new Exercicio("Rato", "R", 1, "dica",
                 TipoExercicio.PARES_MINIMOS, "rato|🐀;pato|🦆", "rato"));
 
-        var acerto = controller.responder(par.getId(), new RespostaController.Resposta("RATO"));
-        var erro = controller.responder(par.getId(), new RespostaController.Resposta("pato"));
+        var acerto = controller.responder(par.getId(), null, new RespostaController.Resposta("RATO"));
+        var erro = controller.responder(par.getId(), null, new RespostaController.Resposta("pato"));
 
         assertThat(acerto.getBody().correta()).isTrue();
         assertThat(erro.getBody().correta()).isFalse();
@@ -42,7 +42,7 @@ class RespostaControllerTest {
         Exercicio escuta = exercicios.save(new Exercicio("Sons do S", "S", 1, "dica",
                 TipoExercicio.ESCUTA, "sapo;sino", null));
 
-        var resposta = controller.responder(escuta.getId(), new RespostaController.Resposta("sapo"));
+        var resposta = controller.responder(escuta.getId(), null, new RespostaController.Resposta("sapo"));
 
         assertThat(resposta.getStatusCode().value()).isEqualTo(400);
     }

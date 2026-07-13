@@ -1,5 +1,12 @@
 import { gravacaoParaWav } from './fala/paraWav'
-import type { AnaliseFala, Exercicio, Progresso, ResultadoResposta } from './types'
+import type {
+  Album,
+  Crianca,
+  Exercicio,
+  Progresso,
+  ResultadoResposta,
+  ResultadoTentativa,
+} from './types'
 
 export async function listarExercicios(): Promise<Exercicio[]> {
   const res = await fetch('/api/exercicios')
@@ -7,41 +14,68 @@ export async function listarExercicios(): Promise<Exercicio[]> {
   return res.json()
 }
 
+function comStatus(mensagem: string, status: number): Error {
+  const erro = new Error(mensagem)
+  ;(erro as Error & { status?: number }).status = status
+  return erro
+}
+
 export async function enviarTentativa(
   exercicioId: number,
+  criancaId: number,
   audio: Blob,
-): Promise<AnaliseFala> {
+): Promise<ResultadoTentativa> {
   const wav = await gravacaoParaWav(audio)
   const form = new FormData()
   form.append('audio', wav, 'gravacao.wav')
-  const res = await fetch(`/api/exercicios/${exercicioId}/tentativas`, {
+  const res = await fetch(`/api/exercicios/${exercicioId}/tentativas?criancaId=${criancaId}`, {
     method: 'POST',
     body: form,
   })
-  if (!res.ok) {
-    const erro = new Error(`Erro ao analisar gravação: ${res.status}`)
-    ;(erro as Error & { status?: number }).status = res.status
-    throw erro
-  }
+  if (!res.ok) throw comStatus(`Erro ao analisar gravação: ${res.status}`, res.status)
   return res.json()
 }
 
 export async function enviarResposta(
   exercicioId: number,
+  criancaId: number,
   escolha: string,
 ): Promise<ResultadoResposta> {
-  const res = await fetch(`/api/exercicios/${exercicioId}/respostas`, {
+  const res = await fetch(`/api/exercicios/${exercicioId}/respostas?criancaId=${criancaId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ escolha }),
   })
-  if (!res.ok) throw new Error(`Erro ao enviar resposta: ${res.status}`)
+  if (!res.ok) throw comStatus(`Erro ao enviar resposta: ${res.status}`, res.status)
   return res.json()
 }
 
-export async function buscarProgresso(): Promise<Progresso> {
-  const res = await fetch('/api/progresso')
+export async function buscarProgresso(criancaId?: number): Promise<Progresso> {
+  const query = criancaId ? `?criancaId=${criancaId}` : ''
+  const res = await fetch(`/api/progresso${query}`)
   if (!res.ok) throw new Error(`Erro ao buscar progresso: ${res.status}`)
+  return res.json()
+}
+
+export async function listarCriancas(): Promise<Crianca[]> {
+  const res = await fetch('/api/criancas')
+  if (!res.ok) throw new Error(`Erro ao buscar crianças: ${res.status}`)
+  return res.json()
+}
+
+export async function criarCrianca(nome: string, emoji: string): Promise<Crianca> {
+  const res = await fetch('/api/criancas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nome, emoji }),
+  })
+  if (!res.ok) throw new Error(`Erro ao criar perfil: ${res.status}`)
+  return res.json()
+}
+
+export async function buscarAlbum(criancaId: number): Promise<Album> {
+  const res = await fetch(`/api/criancas/${criancaId}/figurinhas`)
+  if (!res.ok) throw new Error(`Erro ao buscar álbum: ${res.status}`)
   return res.json()
 }
 
@@ -61,10 +95,6 @@ export async function enviarConversa(
   form.append('amigo', amigo)
   form.append('audio', wav, 'gravacao.wav')
   const res = await fetch('/api/conversa', { method: 'POST', body: form })
-  if (!res.ok) {
-    const erro = new Error(`Erro na conversa: ${res.status}`)
-    ;(erro as Error & { status?: number }).status = res.status
-    throw erro
-  }
+  if (!res.ok) throw comStatus(`Erro na conversa: ${res.status}`, res.status)
   return res.json()
 }

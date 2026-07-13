@@ -267,6 +267,153 @@
   border-bottom-left-radius: 4px;
 }
 
+/* ── Perfis, álbum e celebração ── */
+
+.botao-album {
+  position: fixed;
+  top: 114px;
+  right: 14px;
+  border: none;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  font-size: 1.3rem;
+  padding: 8px 10px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.botao-trocar-crianca {
+  position: fixed;
+  top: 64px;
+  left: 14px;
+  border: none;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  font-size: 1.3rem;
+  padding: 8px 10px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.perfis {
+  flex-wrap: wrap;
+}
+
+.nome-crianca {
+  width: 240px;
+  font-size: 1.2rem;
+}
+
+.grade-emojis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 0 auto 18px;
+  max-width: 280px;
+}
+
+.emoji-opcao {
+  font-size: 2rem;
+  padding: 10px;
+  border: 3px solid #efeaff;
+  border-radius: 16px;
+  background: #faf8ff;
+  cursor: pointer;
+}
+
+.emoji-opcao.ativo {
+  border-color: #7c5cff;
+  background: #f2edff;
+}
+
+.grade-figurinhas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.figurinha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: #faf8ff;
+  border: 2px solid #efeaff;
+  border-radius: 14px;
+  padding: 8px 4px;
+}
+
+.figurinha.vazia {
+  opacity: 0.45;
+}
+
+.figurinha-emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.figurinha-nome {
+  font-size: 0.7rem;
+  color: #8a7bc0;
+  text-align: center;
+}
+
+.modal-fundo {
+  position: fixed;
+  inset: 0;
+  background: rgba(74, 58, 122, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.modal-figurinha {
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 28px 40px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  animation: aparecer 0.4s ease;
+}
+
+.figurinha-grande {
+  font-size: 5rem;
+  line-height: 1.2;
+  display: block;
+}
+
+@keyframes aparecer {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.confete {
+  position: absolute;
+  top: -14px;
+  width: 10px;
+  height: 14px;
+  border-radius: 3px;
+  animation: cair linear infinite;
+}
+
+@keyframes cair {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+  }
+  100% {
+    transform: translateY(110vh) rotate(720deg);
+  }
+}
+
 .cartao.adultos {
   max-width: 520px;
   text-align: left;

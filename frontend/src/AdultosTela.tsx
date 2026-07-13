@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { buscarProgresso } from './api'
 import { PERFIS, type PerfilAvatar } from './avatar/perfis'
-import type { Progresso } from './types'
+import type { Crianca, Progresso } from './types'
 
 interface Props {
   aoVoltar: () => void
   perfilAtual: PerfilAvatar
   aoTrocarPerfil: (perfil: PerfilAvatar) => void
+  crianca: Crianca
 }
 
 /**
@@ -14,7 +15,7 @@ interface Props {
  * (conta de multiplicação — padrão em apps infantis para impedir que a
  * criança entre sozinha).
  */
-export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil }: Props) {
+export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil, crianca }: Props) {
   const desafio = useMemo(() => {
     const a = 3 + Math.floor(Math.random() * 6)
     const b = 3 + Math.floor(Math.random() * 6)
@@ -27,9 +28,9 @@ export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil }: Props) {
 
   useEffect(() => {
     if (liberado) {
-      buscarProgresso().then(setProgresso).catch(() => setProgresso(null))
+      buscarProgresso(crianca.id).then(setProgresso).catch(() => setProgresso(null))
     }
-  }, [liberado])
+  }, [liberado, crianca.id])
 
   const verificarGate = () => {
     if (Number(respostaGate) === desafio.resultado) {
@@ -91,7 +92,9 @@ export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil }: Props) {
           ))}
         </div>
 
-        <h2>Progresso da criança</h2>
+        <h2>
+          Progresso de {crianca.emoji} {crianca.nome} — ⭐ {crianca.estrelas}
+        </h2>
 
         {progresso === null ? (
           <p>Carregando o progresso...</p>

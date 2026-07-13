@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
 import { enviarResposta, enviarTentativa, listarExercicios } from './api'
 import { Avatar } from './avatar/Avatar'
+import { FigurinhaModal } from './FigurinhaModal'
 import { useFala } from './hooks/useFala'
 import { useGravador } from './hooks/useGravador'
 import type { PerfilAvatar } from './avatar/perfis'
-import { parsearOpcoes, type AnaliseFala, type EstadoAvatar, type Exercicio } from './types'
+import {
+  parsearOpcoes,
+  type AnaliseFala,
+  type Crianca,
+  type EstadoAvatar,
+  type Exercicio,
+  type FigurinhaGanha,
+} from './types'
 
 type Fase =
   | 'carregando'
@@ -41,16 +49,19 @@ function ordenarTrilha(lista: Exercicio[]): Exercicio[] {
 
 interface Props {
   perfil: PerfilAvatar
+  crianca: Crianca
+  estrelas: number
+  aoGanharEstrelas: (total: number) => void
 }
 
-export function ExercicioTela({ perfil }: Props) {
+export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: Props) {
   const [exercicios, setExercicios] = useState<Exercicio[]>([])
   const [indice, setIndice] = useState(0)
   const [fase, setFase] = useState<Fase>('carregando')
   const [resultado, setResultado] = useState<AnaliseFala | null>(null)
   const [acertou, setAcertou] = useState<boolean | null>(null)
   const [palavraDestacada, setPalavraDestacada] = useState<string | null>(null)
-  const [estrelas, setEstrelas] = useState(0)
+  const [figurinha, setFigurinha] = useState<FigurinhaGanha | null>(null)
   const [mensagem, setMensagem] = useState('')
   const { falar, statusVoz, progressoVoz, getNivelAudio } = useFala()
   const { gravando, iniciar, parar } = useGravador()
@@ -104,11 +115,16 @@ export function ExercicioTela({ perfil }: Props) {
     setFase('analisando')
     try {
       const audio = await parar()
-      const analise = await enviarTentativa(exercicio.id, audio)
-      setResultado(analise)
+      const r = await enviarTentativa(exercicio.id, crianca.id, audio)
+      setResultado(r.analise)
       setFase('resultado')
-      if (analise.notaGeral >= 70) setEstrelas((n) => n + 1)
-      falar(analise.notaGeral >= 70 ? sortear(ELOGIOS) : sortear(INCENTIVOS))
+      if (r.estrelas !== null) aoGanharEstrelas(r.estrelas)
+      if (r.figurinha) {
+        setFigurinha(r.figurinha)
+        falar(`Você ganhou uma figurinha nova! É ${r.figurinha.nome}! Parabéns!`)
+      } else {
+        falar(r.analise.notaGeral >= 70 ? sortear(ELOGIOS) : sortear(INCENTIVOS))
+      }
     } catch (e) {
       const status = (e as Error & { status?: number }).status
       if (status === 400 || status === 422) {
@@ -119,7 +135,7 @@ export function ExercicioTela({ perfil }: Props) {
         setMensagem('Ops, algo deu errado na análise. Vamos tentar de novo?')
       }
     }
-  }, [exercicio, falar, parar])
+  }, [exercicio, falar, parar, crianca.id, aoGanharEstrelas])
 
   // ── Escolha (pares mínimos / rima) ───────────────────────────────────
   const escolher = useCallback(
@@ -127,11 +143,14 @@ export function ExercicioTela({ perfil }: Props) {
       if (fase !== 'pronto') return
       setFase('analisando')
       try {
-        const r = await enviarResposta(exercicio.id, palavra)
+        const r = await enviarResposta(exercicio.id, crianca.id, palavra)
         setAcertou(r.correta)
         setFase('resultado')
-        if (r.correta) {
-          setEstrelas((n) => n + 1)
+        if (r.estrelas !== null) aoGanharEstrelas(r.estrelas)
+        if (r.figurinha) {
+          setFigurinha(r.figurinha)
+          falar(`Você ganhou uma figurinha nova! É ${r.figurinha.nome}! Parabéns!`)
+        } else if (r.correta) {
           falar(sortear(ELOGIOS))
         } else {
           falar(`Quase! A resposta certa é ${r.respostaCorreta}. Vamos ouvir de novo?`)
@@ -141,7 +160,7 @@ export function ExercicioTela({ perfil }: Props) {
         setMensagem('Ops, algo deu errado. Vamos tentar de novo?')
       }
     },
-    [exercicio, falar, fase],
+    [exercicio, falar, fase, crianca.id, aoGanharEstrelas],
   )
 
   const tentarDeNovo = useCallback(() => {
@@ -195,11 +214,10 @@ export function ExercicioTela({ perfil }: Props) {
 
   return (
     <div className="tela">
-      {estrelas > 0 && (
-        <div className="estrelas-sessao" aria-label={`${estrelas} estrelas ganhas`}>
-          ⭐ {estrelas}
-        </div>
-      )}
+      <div className="estrelas-sessao" aria-label={`${estrelas} estrelas de ${crianca.nome}`}>
+        {crianca.emoji} ⭐ {estrelas}
+      </div>
+      {figurinha && <FigurinhaModal figurinha={figurinha} aoFechar={() => setFigurinha(null)} />}
       <Avatar estado={estadoAvatar} modelo={perfil.modelo} getNivelAudio={getNivelAudio} />
       {statusVoz === 'carregando' && progressoVoz > 0 && progressoVoz < 100 && (
         <p className="status-voz">Preparando a voz do Lalê... {progressoVoz}%</p>

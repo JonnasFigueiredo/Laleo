@@ -46,6 +46,26 @@ Feedback sempre celebratório ou encorajador, nunca punitivo — princípio tran
 as abordagens infantis. Erro em exercício de escolha → o Lalê nomeia a resposta certa e
 oferece nova tentativa; nota baixa em produção → incentivo e repetição.
 
+## 6. Gamificação (revisões JMIR/PMC sobre apps infantis)
+
+As revisões sistemáticas de gamificação em apps de saúde/educação infantil apontam
+**pontos/recompensas** como o elemento mais usado e eficaz, seguidos de **feedback
+imediato multissensorial** e **incentivos em camadas** (recompensa curta + objetivo
+de longo prazo). Placar/competição é pouco indicado para crianças pequenas.
+
+**No app:**
+- **Estrelas** (pontos): nota ≥ 70 ou acerto em escolha = 1 estrela, persistida por criança
+- **Álbum de figurinhas** (colecionável em camadas + recompensa variável): a cada 5
+  estrelas a criança ganha uma figurinha **surpresa** de um catálogo de 24 — o sorteio
+  imprevisível prende mais que prêmio fixo, e completar o álbum é o objetivo longo
+- **Celebração multissensorial**: avatar comemora (animação) + fala (voz) + confete (visual)
+- **Perfis por criança** (identidade): cada criança tem nome, emoji e seu próprio álbum
+- Sem ranking entre crianças; o erro nunca é punido
+
+Referências: revisão de gamificação em apps para crianças com deficiência (JMIR Serious
+Games 2024, PMC11415723); revisão conceitual saúde infantil (PMC10886329); RCT app
+gamificado TDAH (Frontiers in Education 2025).
+
 ## Roadmap metodológico (não implementado)
 
 - **Ciclos completos de Hodson**: rotacionar padrões-alvo por período (requer plano terapêutico)

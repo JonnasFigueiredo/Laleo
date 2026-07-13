@@ -37,9 +37,38 @@ export interface AnaliseFala {
   fonemas: NotaFonema[]
 }
 
+export interface Crianca {
+  id: number
+  nome: string
+  emoji: string
+  estrelas: number
+}
+
+export interface FigurinhaGanha {
+  emoji: string
+  nome: string
+}
+
+export interface Figurinha extends FigurinhaGanha {
+  id: number
+}
+
+export interface Album {
+  ganhas: Figurinha[]
+  totalCatalogo: number
+}
+
+export interface ResultadoTentativa {
+  analise: AnaliseFala
+  estrelas: number | null
+  figurinha: FigurinhaGanha | null
+}
+
 export interface ResultadoResposta {
   correta: boolean
   respostaCorreta: string
+  estrelas: number | null
+  figurinha: FigurinhaGanha | null
 }
 
 export interface ProgressoFonema {

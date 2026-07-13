@@ -7,6 +7,7 @@ import java.util.TreeMap;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import app.laleo.tentativa.Tentativa;
@@ -29,8 +30,10 @@ public class ProgressoController {
     }
 
     @GetMapping
-    public Progresso resumo() {
-        List<Tentativa> todas = tentativas.findAll();
+    public Progresso resumo(@RequestParam(value = "criancaId", required = false) Long criancaId) {
+        List<Tentativa> todas = criancaId == null
+                ? tentativas.findAll()
+                : tentativas.findByCriancaId(criancaId);
         Map<String, List<Tentativa>> porFonema = new TreeMap<>();
         for (Tentativa t : todas) {
             porFonema.computeIfAbsent(t.getFonemaAlvo(), k -> new java.util.ArrayList<>()).add(t);

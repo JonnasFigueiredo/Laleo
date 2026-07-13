@@ -20,6 +20,9 @@ public class Tentativa {
 
     private Long exercicioId;
 
+    /** Perfil da criança; null em tentativas antigas ou sem perfil. */
+    private Long criancaId;
+
     private String fonemaAlvo;
 
     private int notaGeral;
@@ -29,8 +32,9 @@ public class Tentativa {
     protected Tentativa() {
     }
 
-    public Tentativa(Long exercicioId, String fonemaAlvo, int notaGeral) {
+    public Tentativa(Long exercicioId, Long criancaId, String fonemaAlvo, int notaGeral) {
         this.exercicioId = exercicioId;
+        this.criancaId = criancaId;
         this.fonemaAlvo = fonemaAlvo;
         this.notaGeral = notaGeral;
         this.criadaEm = Instant.now();
@@ -42,6 +46,10 @@ public class Tentativa {
 
     public Long getExercicioId() {
         return exercicioId;
+    }
+
+    public Long getCriancaId() {
+        return criancaId;
     }
 
     public String getFonemaAlvo() {

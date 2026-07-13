@@ -7,10 +7,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import app.laleo.crianca.GamificacaoService;
 import app.laleo.exercicio.Exercicio;
 import app.laleo.exercicio.ExercicioRepository;
 import app.laleo.fala.AnaliseFala;
@@ -20,15 +22,21 @@ import app.laleo.fala.FalaService;
 @RequestMapping("/api/exercicios/{exercicioId}/tentativas")
 public class TentativaController {
 
+    public record ResultadoTentativa(AnaliseFala analise, Integer estrelas,
+            GamificacaoService.FigurinhaGanha figurinha) {
+    }
+
     private final ExercicioRepository exercicios;
     private final TentativaRepository tentativas;
     private final FalaService falaService;
+    private final GamificacaoService gamificacao;
 
     public TentativaController(ExercicioRepository exercicios, TentativaRepository tentativas,
-            FalaService falaService) {
+            FalaService falaService, GamificacaoService gamificacao) {
         this.exercicios = exercicios;
         this.tentativas = tentativas;
         this.falaService = falaService;
+        this.gamificacao = gamificacao;
     }
 
     /**
@@ -36,7 +44,8 @@ public class TentativaController {
      * O áudio é processado em memória e descartado.
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<AnaliseFala> analisar(@PathVariable Long exercicioId,
+    public ResponseEntity<ResultadoTentativa> analisar(@PathVariable Long exercicioId,
+            @RequestParam(value = "criancaId", required = false) Long criancaId,
             @RequestPart("audio") MultipartFile audio) throws IOException {
         Exercicio exercicio = exercicios.findById(exercicioId).orElse(null);
         if (exercicio == null) {
@@ -44,7 +53,12 @@ public class TentativaController {
         }
         AnaliseFala analise = falaService.analisar(audio.getBytes(), exercicio.getPalavra(),
                 exercicio.getFonemaAlvo());
-        tentativas.save(new Tentativa(exercicioId, exercicio.getFonemaAlvo(), analise.notaGeral()));
-        return ResponseEntity.ok(analise);
+        tentativas.save(new Tentativa(exercicioId, criancaId, exercicio.getFonemaAlvo(), analise.notaGeral()));
+
+        var recompensa = gamificacao.registrar(criancaId, analise.notaGeral());
+        return ResponseEntity.ok(new ResultadoTentativa(
+                analise,
+                recompensa.map(GamificacaoService.Recompensa::estrelas).orElse(null),
+                recompensa.map(GamificacaoService.Recompensa::figurinha).orElse(null)));
     }
 }

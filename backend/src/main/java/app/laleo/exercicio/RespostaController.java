@@ -5,8 +5,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import app.laleo.crianca.GamificacaoService;
 import app.laleo.tentativa.Tentativa;
 import app.laleo.tentativa.TentativaRepository;
 import jakarta.validation.constraints.NotBlank;
@@ -23,19 +25,25 @@ public class RespostaController {
     public record Resposta(@NotBlank String escolha) {
     }
 
-    public record Resultado(boolean correta, String respostaCorreta) {
+    public record Resultado(boolean correta, String respostaCorreta, Integer estrelas,
+            GamificacaoService.FigurinhaGanha figurinha) {
     }
 
     private final ExercicioRepository exercicios;
     private final TentativaRepository tentativas;
+    private final GamificacaoService gamificacao;
 
-    public RespostaController(ExercicioRepository exercicios, TentativaRepository tentativas) {
+    public RespostaController(ExercicioRepository exercicios, TentativaRepository tentativas,
+            GamificacaoService gamificacao) {
         this.exercicios = exercicios;
         this.tentativas = tentativas;
+        this.gamificacao = gamificacao;
     }
 
     @PostMapping
-    public ResponseEntity<Resultado> responder(@PathVariable Long exercicioId, @RequestBody Resposta resposta) {
+    public ResponseEntity<Resultado> responder(@PathVariable Long exercicioId,
+            @RequestParam(value = "criancaId", required = false) Long criancaId,
+            @RequestBody Resposta resposta) {
         Exercicio exercicio = exercicios.findById(exercicioId).orElse(null);
         if (exercicio == null) {
             return ResponseEntity.notFound().build();
@@ -44,7 +52,12 @@ public class RespostaController {
             return ResponseEntity.badRequest().build();
         }
         boolean correta = exercicio.getRespostaCorreta().equalsIgnoreCase(resposta.escolha().trim());
-        tentativas.save(new Tentativa(exercicioId, exercicio.getFonemaAlvo(), correta ? 100 : 30));
-        return ResponseEntity.ok(new Resultado(correta, exercicio.getRespostaCorreta()));
+        int nota = correta ? 100 : 30;
+        tentativas.save(new Tentativa(exercicioId, criancaId, exercicio.getFonemaAlvo(), nota));
+
+        var recompensa = gamificacao.registrar(criancaId, nota);
+        return ResponseEntity.ok(new Resultado(correta, exercicio.getRespostaCorreta(),
+                recompensa.map(GamificacaoService.Recompensa::estrelas).orElse(null),
+                recompensa.map(GamificacaoService.Recompensa::figurinha).orElse(null)));
     }
 }

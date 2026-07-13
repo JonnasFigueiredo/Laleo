@@ -495,6 +495,74 @@
   text-align: center;
 }
 
+/* ── Portão de PIN ── */
+
+.pin-cartao {
+  max-width: 340px;
+  text-align: center;
+}
+
+.pin-pontos {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.pin-ponto {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #b3a1ff;
+  transition: background 0.15s ease;
+}
+
+.pin-ponto.cheio {
+  background: #7c5cff;
+  border-color: #7c5cff;
+}
+
+.teclado-pin {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 260px;
+  margin: 10px auto 0;
+}
+
+.tecla-pin {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #4a3a7a;
+  background: #f2edff;
+  border: none;
+  border-radius: 16px;
+  padding: 16px 0;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.tecla-pin:active {
+  transform: scale(0.94);
+  background: #e2d8ff;
+}
+
+.tecla-pin.vazia {
+  background: transparent;
+  font-size: 1.3rem;
+  color: #8a7bc0;
+}
+
+.trocar-pin {
+  margin-top: 4px;
+  background: none;
+  border: none;
+  color: #8a7bc0;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .resumo-total {
   color: #8a7bc0;
 }

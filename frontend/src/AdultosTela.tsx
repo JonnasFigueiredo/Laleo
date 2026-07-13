@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { buscarProgresso } from './api'
+import { PortaoPin } from './PortaoPin'
+import { apagarPin } from './pinAdulto'
 import { PERFIS, type PerfilAvatar } from './avatar/perfis'
 import type { Crianca, Progresso } from './types'
 
@@ -11,19 +13,12 @@ interface Props {
 }
 
 /**
- * Área dos responsáveis/fonoaudiólogo, protegida por portão de adulto
- * (conta de multiplicação — padrão em apps infantis para impedir que a
- * criança entre sozinha).
+ * Área dos responsáveis/fonoaudiólogo, protegida por PIN — o adulto cria
+ * um PIN na primeira vez e digita nas próximas, impedindo que a criança
+ * entre sozinha.
  */
 export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil, crianca }: Props) {
-  const desafio = useMemo(() => {
-    const a = 3 + Math.floor(Math.random() * 6)
-    const b = 3 + Math.floor(Math.random() * 6)
-    return { a, b, resultado: a * b }
-  }, [])
-  const [respostaGate, setRespostaGate] = useState('')
   const [liberado, setLiberado] = useState(false)
-  const [erroGate, setErroGate] = useState(false)
   const [progresso, setProgresso] = useState<Progresso | null>(null)
 
   useEffect(() => {
@@ -32,45 +27,13 @@ export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil, crianca }: 
     }
   }, [liberado, crianca.id])
 
-  const verificarGate = () => {
-    if (Number(respostaGate) === desafio.resultado) {
-      setLiberado(true)
-    } else {
-      setErroGate(true)
-      setRespostaGate('')
-    }
+  const trocarPin = () => {
+    apagarPin()
+    setLiberado(false)
   }
 
   if (!liberado) {
-    return (
-      <div className="tela">
-        <div className="cartao adultos">
-          <h2>Área dos adultos</h2>
-          <p>Para continuar, resolva:</p>
-          <p className="gate-desafio">
-            {desafio.a} × {desafio.b} = ?
-          </p>
-          <input
-            className="gate-entrada"
-            type="number"
-            inputMode="numeric"
-            value={respostaGate}
-            onChange={(e) => setRespostaGate(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && verificarGate()}
-            autoFocus
-          />
-          {erroGate && <p className="gate-erro">Resposta incorreta. Tente novamente.</p>}
-          <div className="acoes">
-            <button className="botao secundario" onClick={aoVoltar}>
-              Voltar
-            </button>
-            <button className="botao" onClick={verificarGate}>
-              Entrar
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+    return <PortaoPin aoLiberar={() => setLiberado(true)} aoVoltar={aoVoltar} />
   }
 
   return (
@@ -141,6 +104,9 @@ export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil, crianca }: 
 
         <button className="botao" onClick={aoVoltar}>
           ← Voltar para os exercícios
+        </button>
+        <button className="trocar-pin" onClick={trocarPin}>
+          Trocar o PIN
         </button>
       </div>
     </div>

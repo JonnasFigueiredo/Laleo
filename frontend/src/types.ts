@@ -53,4 +53,4 @@ export interface Progresso {
   porFonema: ProgressoFonema[]
 }
 
-export type EstadoAvatar = 'idle' | 'falando' | 'ouvindo' | 'comemorando'
+export type EstadoAvatar = 'idle' | 'falando' | 'ouvindo' | 'comemorando' | 'pensando'

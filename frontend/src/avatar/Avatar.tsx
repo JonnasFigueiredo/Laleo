@@ -19,9 +19,26 @@ interface Props {
 }
 
 /**
- * O Lalê em VRM (modelo Vita, CC0) com lipsync dirigido pelo áudio real do
- * TTS e expressões por estado. Se o VRM não carregar, cai para o boneco
- * procedural antigo — o app nunca fica sem avatar.
+ * Animações profissionais em public/animacoes/ (MIT — pixiv/ChatVRM e
+ * tk256ailab/vrm-viewer). Clipes de uma vez só (aceno, olhar) voltam ao
+ * idle sozinhos; os demais ficam em loop até o estado mudar.
+ */
+const CLIPES: Record<string, string> = {
+  idle: '/animacoes/idle.vrma',
+  acenar: '/animacoes/acenar.vrma',
+  pular: '/animacoes/pular.vrma',
+  palmas: '/animacoes/palmas.vrma',
+  olhar: '/animacoes/olhar.vrma',
+  pensar: '/animacoes/pensar.vrma',
+}
+const CLIPES_UMA_VEZ = new Set(['acenar', 'olhar'])
+const COMEMORACOES = ['pular', 'palmas']
+
+/**
+ * O avatar do Laleo: modelo VRM + animações VRMA com transições suaves.
+ * Boca (lipsync pela amplitude do áudio) e piscada continuam procedurais
+ * por cima das animações. Sem os arquivos, cai para o movimento
+ * procedural; sem o VRM, cai para o boneco primitivo.
  */
 export function Avatar({ estado, modelo, getNivelAudio }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -37,7 +54,6 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
     const cena = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100)
 
-    // preserveDrawingBuffer permite capturar o canvas (foto com o Lalê / debug)
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     container.appendChild(renderer.domElement)
@@ -51,8 +67,10 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
     let bracoEsq: THREE.Object3D | null = null
     let bracoDir: THREE.Object3D | null = null
     let mixer: THREE.AnimationMixer | null = null
-    let acaoIdle: THREE.AnimationAction | null = null
-    let pesoAnimacao = 1
+    const acoes: Record<string, THREE.AnimationAction> = {}
+    let acaoAtual = ''
+    let comemoracao = 0
+    let proximoOlhar = 14
     let descartado = false
 
     // O VRM entra dentro deste grupo: o giro para encarar a câmera fica no
@@ -61,14 +79,9 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
     cena.add(suporte)
     const GIRO_FRENTE = Math.PI
 
-    // Enquadra pela caixa real do modelo, com folga em cima para o cabelo
-    // e para o pulo da comemoração — a cabeça nunca sai da tela
-    const FOLGA_TOPO = 0.2
-    const enquadrar = (modelo3d: THREE.Object3D) => {
-      const caixa = new THREE.Box3().setFromObject(modelo3d)
-      const topo = caixa.max.y
-      const centro = topo - 0.45
-      const meiaAltura = topo + FOLGA_TOPO - centro
+    const enquadrar = (topoEfetivo: number) => {
+      const centro = topoEfetivo - 0.55
+      const meiaAltura = topoEfetivo + 0.1 - centro
       const distancia = meiaAltura / Math.tan(((camera.fov / 2) * Math.PI) / 180)
       camera.position.set(0, centro + 0.05, distancia)
       camera.lookAt(0, centro, 0)
@@ -81,6 +94,76 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
       camera.lookAt(0, 0, 0)
     }
 
+    const tocar = (nome: string) => {
+      const proxima = acoes[nome]
+      if (!proxima || nome === acaoAtual) return
+      const anterior = acoes[acaoAtual]
+      proxima.reset()
+      if (CLIPES_UMA_VEZ.has(nome)) {
+        proxima.setLoop(THREE.LoopOnce, 1)
+        proxima.clampWhenFinished = true
+      } else {
+        proxima.setLoop(THREE.LoopRepeat, Infinity)
+      }
+      proxima.play()
+      if (anterior) anterior.crossFadeTo(proxima, 0.35, false)
+      acaoAtual = nome
+    }
+
+    /**
+     * Mede a altura máxima que a cabeça atinge em todas as animações
+     * (o pulo sobe!) para a câmera nunca cortar a cabeça.
+     */
+    const medirTopoMaximo = (modeloVrm: VRM, topoRepouso: number): number => {
+      const cabeca = modeloVrm.humanoid.getNormalizedBoneNode('head')
+      if (!cabeca || !mixer) return topoRepouso
+      const pos = new THREE.Vector3()
+      cabeca.getWorldPosition(pos)
+      const folgaCabelo = topoRepouso - pos.y
+      let maxCabeca = pos.y
+      for (const acao of Object.values(acoes)) {
+        mixer.stopAllAction()
+        acao.reset().play()
+        const duracao = acao.getClip().duration
+        for (let tt = 0; tt < duracao; tt += 0.15) {
+          mixer.update(0.15)
+          cena.updateMatrixWorld(true)
+          cabeca.getWorldPosition(pos)
+          if (pos.y > maxCabeca) maxCabeca = pos.y
+        }
+      }
+      mixer.stopAllAction()
+      return maxCabeca + folgaCabelo
+    }
+
+    const carregarAnimacoes = async (modeloVrm: VRM, topoRepouso: number) => {
+      const loaderAnim = new GLTFLoader()
+      loaderAnim.register((parser) => new VRMAnimationLoaderPlugin(parser))
+      mixer = new THREE.AnimationMixer(modeloVrm.scene)
+
+      await Promise.all(
+        Object.entries(CLIPES).map(async ([nome, caminho]) => {
+          try {
+            const gltf = await loaderAnim.loadAsync(caminho)
+            const anim = gltf.userData.vrmAnimations?.[0] as VRMAnimation | undefined
+            if (anim && mixer) acoes[nome] = mixer.clipAction(createVRMAnimationClip(anim, modeloVrm))
+          } catch {
+            console.warn(`Animação ${nome} não carregou (${caminho})`)
+          }
+        }),
+      )
+      if (descartado || Object.keys(acoes).length === 0) return
+
+      enquadrar(medirTopoMaximo(modeloVrm, topoRepouso))
+
+      // Entrada simpática: acena e depois fica de boa
+      tocar(acoes.acenar ? 'acenar' : 'idle')
+      mixer!.addEventListener('finished', () => {
+        acaoAtual = ''
+        tocar('idle')
+      })
+    }
+
     const loader = new GLTFLoader()
     loader.register((parser) => new VRMLoaderPlugin(parser))
     loader
@@ -90,39 +173,20 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
         vrm = gltf.userData.vrm as VRM
         suporte.add(vrm.scene)
 
-        // Sai da T-pose: braços relaxados (a pose é reaplicada no loop,
-        // porque a comemoração os anima)
+        // Pose de repouso caso as animações não carreguem
         bracoEsq = vrm.humanoid.getNormalizedBoneNode('leftUpperArm')
         bracoDir = vrm.humanoid.getNormalizedBoneNode('rightUpperArm')
         if (bracoEsq) bracoEsq.rotation.z = 1.15
         if (bracoDir) bracoDir.rotation.z = -1.15
 
-        enquadrar(vrm.scene)
-        void carregarAnimacaoIdle(vrm)
+        const caixa = new THREE.Box3().setFromObject(vrm.scene)
+        enquadrar(caixa.max.y + 0.1)
+        void carregarAnimacoes(vrm, caixa.max.y)
       })
       .catch((e) => {
         console.warn('VRM não carregou, usando avatar procedural:', e)
         if (!descartado) usarFallback()
       })
-
-    // Animação profissional de "parado respirando" (idle_loop.vrma, MIT —
-    // pixiv/ChatVRM). Se não carregar, o loop procedural continua sozinho.
-    // Outras animações .vrma podem ser colocadas em public/animacoes/.
-    const carregarAnimacaoIdle = async (modeloVrm: VRM) => {
-      try {
-        const loaderAnim = new GLTFLoader()
-        loaderAnim.register((parser) => new VRMAnimationLoaderPlugin(parser))
-        const gltfAnim = await loaderAnim.loadAsync('/animacoes/idle.vrma')
-        const animacao = gltfAnim.userData.vrmAnimations?.[0] as VRMAnimation | undefined
-        if (!animacao || descartado) return
-        const clipe = createVRMAnimationClip(animacao, modeloVrm)
-        mixer = new THREE.AnimationMixer(modeloVrm.scene)
-        acaoIdle = mixer.clipAction(clipe)
-        acaoIdle.play()
-      } catch (e) {
-        console.warn('Animação idle não carregou; usando movimento procedural:', e)
-      }
-    }
 
     const redimensionar = () => {
       const { clientWidth: w, clientHeight: h } = container
@@ -172,43 +236,57 @@ export function Avatar({ estado, modelo, getNivelAudio }: Props) {
         raiz.rotation.set(0, GIRO_FRENTE, 0)
         setExpressao('happy', 0)
 
-        // A animação idle (VRMA) dirige corpo/braços/cabeça; na comemoração
-        // ela cede lugar com fade e o procedural assume
-        const animando = acaoIdle !== null
-        const alvoPeso = est === 'comemorando' ? 0 : 1
-        pesoAnimacao += (alvoPeso - pesoAnimacao) * Math.min(1, delta * 5)
+        const animando = acaoAtual !== '' && mixer !== null
         if (animando) {
-          acaoIdle!.setEffectiveWeight(pesoAnimacao)
+          // Escolhe o clipe pelo estado; comemoração alterna pulo/palmas
+          if (est === 'comemorando') {
+            if (!COMEMORACOES.includes(acaoAtual)) {
+              comemoracao = (comemoracao + 1) % COMEMORACOES.length
+              tocar(acoes[COMEMORACOES[comemoracao]] ? COMEMORACOES[comemoracao] : 'idle')
+            }
+            setExpressao('happy', 1)
+          } else if (est === 'pensando') {
+            tocar(acoes.pensar ? 'pensar' : 'idle')
+          } else if (acaoAtual !== 'acenar' && acaoAtual !== 'olhar') {
+            tocar('idle')
+            // De vez em quando, olha ao redor curiosa
+            if (est === 'idle' && t > proximoOlhar) {
+              proximoOlhar = t + 14 + Math.random() * 8
+              if (acoes.olhar) tocar('olhar')
+            }
+          }
           mixer!.update(delta)
+
+          if (est === 'ouvindo' && cabeca) {
+            // Inclinação aplicada depois do mixer: sobrepõe a animação
+            cabeca.rotation.z = 0.14
+            cabeca.rotation.x = 0.08
+            setExpressao('happy', 0.25)
+          }
         } else {
-          // Sem animação: pose procedural de sempre
+          // Sem animações: movimento procedural de reserva
           if (cabeca) cabeca.rotation.set(0, 0, 0)
           if (bracoEsq) bracoEsq.rotation.z = 1.15
           if (bracoDir) bracoDir.rotation.z = -1.15
-        }
-
-        if (est === 'falando') {
-          if (!animando && cabeca) cabeca.rotation.x = Math.sin(t * 2.2) * 0.04
-        } else if (est === 'ouvindo') {
-          // Inclinação aplicada depois do mixer: sobrepõe a animação
-          if (cabeca) {
-            cabeca.rotation.z = 0.14
-            cabeca.rotation.x = 0.08
+          if (est === 'falando') {
+            if (cabeca) cabeca.rotation.x = Math.sin(t * 2.2) * 0.04
+          } else if (est === 'ouvindo') {
+            if (cabeca) {
+              cabeca.rotation.z = 0.14
+              cabeca.rotation.x = 0.08
+            }
+            setExpressao('happy', 0.25)
+          } else if (est === 'comemorando') {
+            raiz.position.y = Math.abs(Math.sin(t * 5.5)) * 0.06
+            const balanco = -0.5 - Math.sin(t * 7) * 0.25
+            if (bracoEsq) bracoEsq.rotation.z = balanco
+            if (bracoDir) bracoDir.rotation.z = -balanco
+            if (cabeca) cabeca.rotation.x = -0.08
+            setExpressao('happy', 1)
+          } else {
+            raiz.rotation.y = GIRO_FRENTE + Math.sin(t * 0.6) * 0.06
+            if (cabeca) cabeca.rotation.x = Math.sin(t * 1.4) * 0.02
           }
-          setExpressao('happy', 0.25)
-        } else if (est === 'comemorando') {
-          // Pulinho contido (a folga do enquadramento cobre a amplitude)
-          raiz.position.y = Math.abs(Math.sin(t * 5.5)) * 0.06
-          raiz.rotation.y = GIRO_FRENTE + Math.sin(t * 3) * 0.08
-          // Braços para cima balançando: comemoração de verdade
-          const balanco = 0.55 + Math.sin(t * 7) * 0.25
-          if (bracoEsq) bracoEsq.rotation.z = balanco
-          if (bracoDir) bracoDir.rotation.z = -balanco
-          if (cabeca) cabeca.rotation.x = -0.08
-          setExpressao('happy', 1)
-        } else if (!animando) {
-          raiz.rotation.y = GIRO_FRENTE + Math.sin(t * 0.6) * 0.06
-          if (cabeca) cabeca.rotation.x = Math.sin(t * 1.4) * 0.02
         }
 
         vrm.update(delta)

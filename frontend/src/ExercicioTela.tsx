@@ -180,9 +180,11 @@ export function ExercicioTela({ perfil }: Props) {
       ? 'falando'
       : fase === 'gravando'
         ? 'ouvindo'
-        : fase === 'resultado' && (acertou === true || (resultado !== null && resultado.notaGeral >= 70))
-          ? 'comemorando'
-          : 'idle'
+        : fase === 'analisando'
+          ? 'pensando'
+          : fase === 'resultado' && (acertou === true || (resultado !== null && resultado.notaGeral >= 70))
+            ? 'comemorando'
+            : 'idle'
 
   if (fase === 'carregando') {
     return <div className="tela centro">Chamando o Lalê...</div>

@@ -64,7 +64,13 @@ export function ConversaTela({ perfil, aoVoltar }: Props) {
   }, [conversaId, falar, parar, perfil.nome])
 
   const estadoAvatar: EstadoAvatar =
-    fase === 'falando' ? 'falando' : fase === 'gravando' ? 'ouvindo' : 'idle'
+    fase === 'falando'
+      ? 'falando'
+      : fase === 'gravando'
+        ? 'ouvindo'
+        : fase === 'pensando'
+          ? 'pensando'
+          : 'idle'
 
   return (
     <div className="tela conversa">

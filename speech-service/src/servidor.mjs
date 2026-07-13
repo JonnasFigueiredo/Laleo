@@ -29,6 +29,40 @@ const app = new Hono()
 
 app.get('/health', (c) => c.json({ status: 'ok', modelo: MODELO, pronto: transcritor !== null }))
 
+// Transcrição pura para a conversa livre (sem nota de pronúncia)
+app.post('/transcrever', async (c) => {
+  const form = await c.req.formData().catch(() => null)
+  const audio = form?.get('audio')
+  if (!audio || typeof audio === 'string') {
+    return c.json({ erro: 'campo obrigatório: audio (wav)' }, 400)
+  }
+
+  let amostras
+  try {
+    amostras = wavParaFloat32Mono16k(Buffer.from(await audio.arrayBuffer()))
+  } catch (e) {
+    return c.json({ erro: `áudio inválido: ${e.message}` }, 400)
+  }
+
+  let energia = 0
+  for (let i = 0; i < amostras.length; i++) energia += amostras[i] * amostras[i]
+  if (Math.sqrt(energia / amostras.length) < 0.005) {
+    return c.json({ erro: 'nenhuma fala detectada na gravação' }, 422)
+  }
+
+  const asr = await garantirModelo()
+  const resultado = await asr(amostras, {
+    language: 'portuguese',
+    task: 'transcribe',
+    max_new_tokens: 64,
+  })
+  const transcricao = (resultado.text ?? '').trim()
+  if (!transcricao) {
+    return c.json({ erro: 'nenhuma fala detectada na gravação' }, 422)
+  }
+  return c.json({ transcricao })
+})
+
 app.post('/analisar', async (c) => {
   const form = await c.req.formData().catch(() => null)
   const audio = form?.get('audio')

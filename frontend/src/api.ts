@@ -44,3 +44,27 @@ export async function buscarProgresso(): Promise<Progresso> {
   if (!res.ok) throw new Error(`Erro ao buscar progresso: ${res.status}`)
   return res.json()
 }
+
+export interface FalaConversa {
+  pergunta: string
+  resposta: string
+}
+
+export async function enviarConversa(
+  conversaId: string,
+  amigo: string,
+  audio: Blob,
+): Promise<FalaConversa> {
+  const wav = await gravacaoParaWav(audio)
+  const form = new FormData()
+  form.append('conversaId', conversaId)
+  form.append('amigo', amigo)
+  form.append('audio', wav, 'gravacao.wav')
+  const res = await fetch('/api/conversa', { method: 'POST', body: form })
+  if (!res.ok) {
+    const erro = new Error(`Erro na conversa: ${res.status}`)
+    ;(erro as Error & { status?: number }).status = res.status
+    throw erro
+  }
+  return res.json()
+}

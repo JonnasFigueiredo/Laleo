@@ -216,6 +216,57 @@
   z-index: 10;
 }
 
+.botao-conversa {
+  position: fixed;
+  top: 64px;
+  right: 14px;
+  border: none;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  font-size: 1.3rem;
+  padding: 8px 10px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+/* ── Tela de conversa ── */
+
+.conversa-cartao {
+  max-width: 460px;
+}
+
+.baloes {
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.balao {
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 16px;
+  max-width: 85%;
+  line-height: 1.35;
+}
+
+.balao.crianca {
+  align-self: flex-end;
+  background: #efeaff;
+  color: #4a3a7a;
+  border-bottom-right-radius: 4px;
+}
+
+.balao.amigo {
+  align-self: flex-start;
+  background: #7c5cff;
+  color: #ffffff;
+  border-bottom-left-radius: 4px;
+}
+
 .cartao.adultos {
   max-width: 520px;
   text-align: left;

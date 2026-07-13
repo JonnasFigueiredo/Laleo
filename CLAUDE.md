@@ -9,6 +9,7 @@ Aplicativo para ajudar crianças (3–10 anos) com dificuldades de fala: exercí
 | Backend | `backend/` | Java 17, Spring Boot 4.1, Maven, H2 (dev) / PostgreSQL (prod) | API REST na porta **8081**, exercícios, progresso, gateway de IA |
 | Frontend | `frontend/` | React + TS + Vite, three.js + @pixiv/three-vrm, Capacitor | Telas, avatar 3D VRM, captura de áudio, PWA + apps mobile |
 | Voz | `frontend/src/fala/` | Piper TTS (`@mintplex-labs/piper-tts-web`), voz `pt_BR-faber-medium` | TTS neural 100% no dispositivo (WASM); fallback speechSynthesis |
+| IA (conversa) | `backend/src/main/java/app/laleo/ia/` | SDK `anthropic-java`; interface `ProvedorIA` plugável | Chave via env `LALEO_IA_CHAVE` (nunca no cliente); sem chave → `ProvedorDemo`; guardrails infantis no `ConversaService` |
 | Serviço de fala | `speech-service/` | Node + Whisper-small (transformers.js), porta **8090** | v0: transcrição + nota por similaridade; iniciar com `npm start` (usa `--use-system-ca`) |
 | Docs | `docs/` | Markdown | Decisões de arquitetura e pesquisa |
 
@@ -16,7 +17,9 @@ Fluxo principal: criança ouve o avatar demonstrar a palavra → grava repetindo
 
 ## Regras invioláveis
 
-1. **Chaves de API (LLM, TTS) só existem no backend** — nunca no cliente.
+1. **Chaves de API (LLM, TTS) só existem no backend** — nunca no cliente. Conversa com IA:
+   exportar `LALEO_IA_CHAVE=sk-ant-...` antes de subir o backend (modelo em `laleo.ia.modelo`,
+   padrão `claude-opus-4-8`; para respostas mais baratas/rápidas usar `claude-haiku-4-5`).
 2. **LGPD**: voz de criança é dado sensível. Áudio é processado e descartado; nada de logs com conteúdo identificável.
 3. **Conteúdo para criança passa por guardrails**: toda saída de LLM é filtrada no backend antes de chegar ao app.
 4. **UX infantil**: feedback sempre positivo, botões grandes, áudio como guia; área adulta separada por gate.

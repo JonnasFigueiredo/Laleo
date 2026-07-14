@@ -1,98 +1,117 @@
-# Laleo 🗣️
+# Laleo
 
-Aplicativo open source para ajudar **crianças de 3 a 10 anos com dificuldades de fala**:
-exercícios de fonoaudiologia gamificados, guiados por um avatar 3D interativo que fala, reage
-e conversa. Roda na web (PWA) e é preparado para virar app Android/iOS.
+Aplicativo open source de apoio ao desenvolvimento da fala de **crianças de 3 a 10 anos**.
+Reúne exercícios de fonoaudiologia gamificados, um avatar 3D interativo que fala e reage, e
+conversa com IA — tudo em português do Brasil. Roda na web (PWA) e está preparado para
+empacotamento como app Android/iOS.
 
-*Laleo* vem do grego **λαλέω** (*laleō*) — falar, tagarelar. O nome também junta os dois
-amiguinhos do app: **Lala** + **Leo**.
+O nome vem do grego *laleō* (λαλέω), "falar", e junta os dois amiguinhos originais do app:
+**Lala** e **Leo**.
 
-> ⚠️ **Apoio, não substituição.** O Laleo apoia o desenvolvimento da fala, mas não substitui
-> avaliação e terapia com fonoaudiólogo(a). O conteúdo (palavras, pares, progressão) ainda
-> **precisa de validação clínica** antes de uso real com crianças.
+> **Aviso importante.** O Laleo é uma ferramenta de apoio e **não substitui** a avaliação e a
+> terapia conduzidas por um(a) fonoaudiólogo(a). O conteúdo (palavras, pares mínimos, rimas e
+> progressão) ainda **depende de validação clínica** antes do uso real com crianças — veja
+> [docs/validacao-clinica.md](docs/validacao-clinica.md).
 
-## O que já funciona
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/01-selecao.png" width="200" alt="Escolha do amiguinho"><br><sub>Escolher o amiguinho</sub></td>
+    <td align="center"><img src="docs/screenshots/02-exercicio.png" width="200" alt="Exercício guiado pelo avatar 3D"><br><sub>Exercício guiado pelo avatar</sub></td>
+    <td align="center"><img src="docs/screenshots/04-conversa.png" width="200" alt="Conversa com o amiguinho"><br><sub>Conversa com IA</sub></td>
+    <td align="center"><img src="docs/screenshots/03-album.png" width="200" alt="Álbum de figurinhas"><br><sub>Álbum de figurinhas</sub></td>
+  </tr>
+</table>
 
-- **4 tipos de exercício fundamentados em metodologia fonoaudiológica** (ver
-  [docs/metodologia.md](docs/metodologia.md)):
-  - 🎤 **Ouça e repita** — o avatar demonstra, a criança repete, a fala é analisada
-  - 🐀🦆 **Pares mínimos** — escolher a figura da palavra falada (contraste fonológico)
-  - 🎵 **Rima** — consciência fonológica, sempre falada em voz alta
-  - 👂 **Escuta** — bombardeio auditivo, só ouvir sem pressão
-  - 49 exercícios cobrindo os fonemas R, S, CH, LH, L, F, V, J, Z, G, C e encontros BR/TR/PR
-- **Análise de pronúncia real** com Whisper (transcrição pt-BR) — não é simulação
-- **Avatar 3D (VRM)** com voz neural pt-BR **rodando 100% no dispositivo** (nada de áudio
-  sai do aparelho): lipsync pela amplitude do áudio, 9 animações profissionais (acenar,
-  pular, palmas, pensar, soneca...), reação ao ser cutucado e cochilo quando ninguém brinca
-- **Dois amiguinhos** selecionáveis (Lala e Leo), com voz coerente ao personagem
-- **Conversa livre com IA** (Claude), com guardrails de conteúdo infantil no backend —
-  funciona em modo demo sem chave, e liga o Claude de verdade ao configurar a chave
-- **Gamificação**: estrelas por acerto + álbum de 24 figurinhas surpresa (a cada 5 estrelas)
-  com celebração de confete
-- **Perfis de criança** — cada uma com seu progresso, estrelas e álbum
-- **Área dos responsáveis** protegida por PIN, com relatório de progresso por fonema
+## Recursos
+
+- **Quatro tipos de exercício fundamentados em metodologia fonoaudiológica**
+  (ver [docs/metodologia.md](docs/metodologia.md)):
+  - *Ouça e repita* — o avatar demonstra a palavra, a criança repete e a fala é analisada.
+  - *Pares mínimos* — escolher a figura correspondente à palavra falada (contraste fonológico).
+  - *Rima* — consciência fonológica, sempre respondida em voz alta.
+  - *Escuta* — bombardeio auditivo, apenas ouvir, sem pressão de produção.
+  - São 49 exercícios cobrindo os fonemas R, S, CH, LH, L, F, V, J, Z, G e C, além dos
+    encontros consonantais BR, TR e PR.
+- **Análise de pronúncia real** com Whisper (transcrição pt-BR) — não é simulação.
+- **Avatar 3D (formato VRM)** com voz neural pt-BR processada **inteiramente no dispositivo**:
+  nenhum áudio sai do aparelho. Inclui lipsync pela amplitude do áudio, animações de corpo
+  inteiro (acenar, pular, aplaudir, pensar, dormir), reação ao toque e cochilo por inatividade.
+- **Três personagens selecionáveis** — Lala, Moranguinha e Leo — cada um com voz coerente,
+  ajustada por *pitch shift* que preserva a duração da fala (a palavra sai mais aguda, porém
+  clara e no ritmo natural).
+- **Conversa livre com IA** (Claude), com guardrails de conteúdo infantil aplicados no
+  backend. Funciona em modo demonstração sem chave e passa a usar o Claude ao configurá-la.
+- **Gamificação leve** — estrelas por acerto e um álbum de 24 figurinhas surpresa (uma a cada
+  cinco estrelas), com celebração ao desbloquear.
+- **Perfis por criança** — progresso, estrelas e álbum independentes.
+- **Área dos responsáveis** protegida por PIN, com relatório de progresso por fonema.
 
 ## Arquitetura
 
 | Módulo | Stack | Papel |
 |--------|-------|-------|
-| `backend/` | Java 17 · Spring Boot 4 · H2 (dev) / PostgreSQL (prod) | API REST na porta 8081, exercícios, progresso, gamificação, gateway de IA |
-| `frontend/` | React · TypeScript · Vite · three.js + @pixiv/three-vrm · Capacitor | Telas, avatar 3D, voz neural, captura de áudio (PWA) |
-| `speech-service/` | Node · Whisper (transformers.js) | Transcrição + nota de pronúncia por fonema (porta 8090) |
-| `docs/` | Markdown | Arquitetura e fundamentação metodológica |
+| `backend/` | Java 17, Spring Boot 4, H2 (dev) / PostgreSQL (prod) | API REST na porta 8081: exercícios, progresso, gamificação e gateway de IA |
+| `frontend/` | React, TypeScript, Vite, three.js + @pixiv/three-vrm, Capacitor | Telas, avatar 3D, voz neural e captura de áudio (PWA) |
+| `speech-service/` | Node, Whisper (transformers.js) | Transcrição e nota de pronúncia por fonema (porta 8090) |
+| `docs/` | Markdown | Arquitetura, metodologia e validação clínica |
 
-Fluxo do exercício: o avatar fala a palavra → a criança grava repetindo → o áudio vira WAV no
-navegador → backend → speech-service (Whisper) → nota por fonema volta → o avatar comemora e o
-progresso é salvo. **A chave da IA e o áudio nunca vão para o cliente** (regras em
-[CLAUDE.md](CLAUDE.md)).
+Fluxo de um exercício: o avatar fala a palavra, a criança grava a repetição, o áudio é
+convertido em WAV no navegador e enviado ao backend, que aciona o serviço de fala (Whisper);
+a nota por fonema retorna, o avatar reage e o progresso é salvo. **A chave da IA e o áudio da
+criança nunca chegam ao cliente** — as regras estão em [CLAUDE.md](CLAUDE.md). Detalhes
+completos em [docs/arquitetura.md](docs/arquitetura.md).
 
-Detalhes completos em [docs/arquitetura.md](docs/arquitetura.md).
+## Como rodar
 
-## Rodando localmente
-
-Pré-requisitos: **JDK 17**, **Node 20+**, **Maven** (ou o wrapper do projeto).
+Pré-requisitos: **JDK 17** e **Node 20 ou superior**. O projeto inclui uma cópia do Maven em
+`tools/`, então não é necessário instalá-lo à parte.
 
 ```bash
-# 1. Backend (porta 8081)
-cd backend
-./mvnw spring-boot:run          # em Windows com TLS interceptado, ver CLAUDE.md
+# 1. Instale as dependências (uma vez)
+npm install --prefix frontend
+npm install --prefix speech-service   # opcional — serviço de análise de fala
 
-# 2. Serviço de fala (porta 8090) — baixa o modelo Whisper na 1ª vez
-cd speech-service
-npm install && npm start
-
-# 3. Frontend (porta 5173)
-cd frontend
-npm install && npm run dev
+# 2. Suba backend + frontend juntos
+npm run dev
 ```
 
-Abra <http://localhost:5173>. O serviço de fala é opcional: sem ele, o backend usa uma
-análise mock e o app continua funcionando.
+O comando `npm run dev` inicia o backend (porta 8081) e o frontend ao mesmo tempo, com os logs
+de cada um identificados. No Windows, o script localiza o JDK 17 automaticamente; em outros
+sistemas, defina `JAVA_HOME` caso o backend não suba. Abra o endereço que o Vite exibir no
+terminal (por padrão `http://localhost:5173`).
 
-### Ligando o Claude (conversa com IA)
+O serviço de fala é opcional e pode subir à parte com `npm run dev:fala`. Sem ele, o backend
+usa uma análise de reserva e o aplicativo continua funcionando.
 
-A conversa funciona em modo demo (respostas locais) por padrão. Para usar o Claude de verdade,
-crie uma chave em [console.anthropic.com](https://console.anthropic.com) e exporte antes de
-subir o backend — a chave **só existe no servidor**:
+### Ligando o Claude
+
+A conversa funciona em modo demonstração (respostas locais) por padrão. Para usar o Claude,
+crie uma chave em [console.anthropic.com](https://console.anthropic.com) e exporte-a antes de
+subir o backend — a chave **existe apenas no servidor**:
 
 ```bash
-export LALEO_IA_CHAVE=sk-ant-...    # modelo em laleo.ia.modelo (padrão claude-opus-4-8)
+export LALEO_IA_CHAVE=sk-ant-...   # modelo em laleo.ia.modelo (padrão claude-opus-4-8)
 ```
 
 ## Créditos e licenças dos assets
 
-- Avatares: **Vita** (VRoid samples, CC0) e **DinoKid** (100Avatars / Polygonal Mind, CC0)
-- Animações VRMA: idle de **pixiv/ChatVRM** (MIT) e demais de **tk256ailab/vrm-viewer** (MIT)
-- Voz: **Piper TTS** (`pt_BR-faber-medium`) via `@mintplex-labs/piper-tts-web`
-- Transcrição: **Whisper** via `@huggingface/transformers`
+- Avatares: **Vita** (VRoid samples, CC0), **StrawberryPrincess** e **DinoKid**
+  (coleção 100Avatars da Polygonal Mind, CC0).
+- Animações VRMA: *idle* de **pixiv/ChatVRM** (MIT) e demais de **tk256ailab/vrm-viewer** (MIT).
+- Voz: **Piper TTS** (`pt_BR-faber-medium`) via `@mintplex-labs/piper-tts-web`.
+- Transcrição: **Whisper** via `@huggingface/transformers`.
 
 ## Roadmap
 
-- [ ] **Validação clínica** do conteúdo com fonoaudiólogo(a) — prioritário
-- [ ] Empacotar como app Android/iOS com Capacitor
-- [ ] Pontuação de pronúncia por fonema (GOP) além da transcrição
-- [ ] Ciclos completos de Hodson e mais interações
+- Validação clínica do conteúdo com fonoaudiólogo(a) — prioritário.
+- Empacotamento como app Android/iOS com Capacitor.
+- Pontuação de pronúncia por fonema (GOP), além da transcrição.
+- Ciclos completos de Hodson e novas interações.
 
-## Status
+## Licença
 
-🟢 **MVP funcional** — jogável de ponta a ponta na web. Conteúdo aguardando validação clínica.
+Código sob licença MIT. Os assets de terceiros mantêm suas licenças originais, indicadas acima.
+
+---
+
+Status: **MVP funcional**, jogável de ponta a ponta na web. Conteúdo aguardando validação clínica.

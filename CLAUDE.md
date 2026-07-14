@@ -46,6 +46,12 @@ cd /d/Projetos/Laleo/backend && export JAVA_HOME="/c/Program Files/Java/jdk-17.0
   && ../tools/apache-maven-3.9.16/bin/mvn -q verify
 ```
 
+Rodar o app (dev): **`npm run dev`** na raiz sobe backend (8081) + frontend juntos, com logs
+prefixados (`scripts/dev.mjs`, sem dependências — acha JDK 17 e Maven embutido sozinho). O
+frontend precisa de `npm install --prefix frontend` antes. O CORS do backend aceita qualquer
+porta de `localhost` (`allowedOriginPatterns`), então tanto faz o Vite subir em 5173/5174/...
+— fixar uma porta só dava **403 no POST** de criar perfil.
+
 ## Assets e binários auto-hospedados (frontend/public/)
 
 - 3 avatares (perfis em `frontend/src/avatar/perfis.ts`): `models/lala.vrm` (Vita, VRoid sample,

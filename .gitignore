@@ -10,8 +10,8 @@ node_modules/
 dist/
 .vite/
 
-# Capacitor
-frontend/android/
+# Capacitor — o projeto android/ é versionado (preserva MainActivity, manifest
+# e config); os artefatos de build são ignorados pelo frontend/android/.gitignore
 frontend/ios/
 
 # IDE

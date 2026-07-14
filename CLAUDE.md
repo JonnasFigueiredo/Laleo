@@ -48,12 +48,14 @@ cd /d/Projetos/Laleo/backend && export JAVA_HOME="/c/Program Files/Java/jdk-17.0
 
 ## Assets e binários auto-hospedados (frontend/public/)
 
-- `models/lala.vrm` (Vita, VRoid beta sample, **CC0**, de `madjin/vrm-samples`) e `models/leo.vrm`
-  (**DinoKid**, coleção 100Avatars da Polygonal Mind, **CC0**, via registro `ToxSam/open-source-avatars`,
-  arquivo em arweave.net). Perfis avatar+voz em `frontend/src/avatar/perfis.ts` (Laleo = Lala + Leo);
-  vozes = faber com playbackRate (Piper não tem voz feminina/infantil pt-BR). ATENÇÃO ao escolher
-  modelos: os samples "masc_vroid" e "HairSample_*" do VRoid são corpos-base SEM ROUPA — sempre
-  inspecionar visualmente (probe.html + receptor, ver skill /rodar) antes de usar
+- 3 avatares (perfis em `frontend/src/avatar/perfis.ts`): `models/lala.vrm` (Vita, VRoid sample,
+  **CC0**), `models/morango.vrm` (**StrawberryPrincess**, 100Avatars, **CC0**, menininha fofa) e
+  `models/leo.vrm` (**DinoKid**, 100Avatars, **CC0**) — os dois últimos via `ToxSam/open-source-avatars`
+  (arweave.net). Vozes fofas = Piper faber com **pitch shift preservando a duração** (SoundTouch,
+  `frontend/src/fala/pitchFofo.ts`) — NÃO usa mais playbackRate (que acelerava a fala). `taxaVoz` no
+  perfil é o multiplicador de pitch. ATENÇÃO ao escolher modelos: os samples "masc_vroid" e
+  "HairSample_*" do VRoid são corpos-base SEM ROUPA; e nomes do 100Avatars não indicam a aparência
+  (Agnes=esqueleto, Jenny=peixe) — sempre inspecionar visualmente (render+captura, ver skill /rodar)
 - `probe.html` (public/) — sonda de dev: renderiza um VRM (`?m=/models/x.vrm`) e envia a captura
   ao receptor local na porta 9377 para inspeção visual
 - `animacoes/idle.vrma` — animação idle profissional (**MIT**, pixiv/ChatVRM), tocada via

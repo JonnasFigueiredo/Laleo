@@ -1,4 +1,5 @@
 import { TtsSession } from '@mintplex-labs/piper-tts-web'
+import { deixarFofo } from './pitchFofo'
 
 /**
  * A voz do Lalê: TTS neural pt-BR (Piper, voz "faber") rodando 100% no
@@ -11,7 +12,9 @@ import { TtsSession } from '@mintplex-labs/piper-tts-web'
 
 const VOZ = 'pt_BR-faber-medium'
 
-// Perfil de voz do avatar escolhido (ver avatar/perfis.ts)
+// Perfil de voz do avatar escolhido (ver avatar/perfis.ts). taxaVoz é o
+// multiplicador de PITCH (voz fofa, mais aguda) — a velocidade não muda,
+// para a palavra sair clara. tomFallback é o pitch do speechSynthesis.
 let taxaVoz = 1.0
 let tomFallback = 1.2
 
@@ -97,12 +100,12 @@ async function falarNeural(texto: string): Promise<void> {
   if (!sessao) throw new Error('sessão de voz indisponível')
   const wav = await sessao.predict(texto)
   const ctx = garantirAudio()
-  const buffer = await ctx.decodeAudioData(await wav.arrayBuffer())
+  const original = await ctx.decodeAudioData(await wav.arrayBuffer())
+  // Pitch shift preservando a duração: voz fofa e clara (ver pitchFofo.ts)
+  const buffer = deixarFofo(ctx, original, taxaVoz)
   return new Promise((resolve) => {
     const fonte = ctx.createBufferSource()
     fonte.buffer = buffer
-    // Pitch do avatar: playbackRate > 1 deixa a voz mais aguda (Lala)
-    fonte.playbackRate.value = taxaVoz
     fonte.connect(analyser!)
     fonte.onended = () => {
       tocando = false

@@ -1,17 +1,18 @@
 /**
- * Perfis de avatar: modelo 3D + voz coerentes. O nome do app vem daqui:
- * Laleo = Lala + Leo. O adulto escolhe na área dos responsáveis.
+ * Perfis de avatar: modelo 3D + voz coerentes. O adulto escolhe na área
+ * dos responsáveis. Três personagens: Lala e Moranguinha (meninas, vozes
+ * fofas e agudas) e Leo (menino, voz mais grave).
  *
- * Nota técnica: o Piper só tem vozes pt-BR masculinas; a voz da Lala é a
- * mesma voz neural com pitch elevado via playbackRate (estilo desenho
- * animado). Quando houver voz feminina pt-BR local, trocar aqui.
+ * Nota técnica: o Piper só tem voz pt-BR masculina; as vozes fofas são a
+ * mesma voz neural com pitch elevado (SoundTouch, ver fala/pitchFofo.ts) —
+ * agora SEM acelerar a fala, para a palavra sair clara para a criança.
  */
 export interface PerfilAvatar {
   id: string
   nome: string
   emoji: string
   modelo: string
-  /** playbackRate do áudio neural: >1 = voz mais aguda (e um pouco mais rápida) */
+  /** multiplicador de pitch da voz neural: >1 = mais aguda/fofa (sem mudar a velocidade) */
   taxaVoz: number
   /** pitch do speechSynthesis no fallback */
   tomFallback: number
@@ -23,16 +24,26 @@ export const PERFIS: PerfilAvatar[] = [
     nome: 'Lala',
     emoji: '👧',
     modelo: '/models/lala.vrm',
-    taxaVoz: 1.18,
-    tomFallback: 1.5,
+    taxaVoz: 1.24,
+    tomFallback: 1.6,
+  },
+  {
+    id: 'morango',
+    nome: 'Moranguinha',
+    emoji: '🍓',
+    modelo: '/models/morango.vrm',
+    // A mais fofa: voz bem aguda e doce, de menininha pequena
+    taxaVoz: 1.32,
+    tomFallback: 1.9,
   },
   {
     id: 'leo',
     nome: 'Leo',
     emoji: '🦖',
     modelo: '/models/leo.vrm',
-    taxaVoz: 1.1,
-    tomFallback: 1.2,
+    // Voz de menino: menos aguda que as meninas
+    taxaVoz: 1.08,
+    tomFallback: 1.15,
   },
 ]
 

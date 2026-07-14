@@ -628,3 +628,212 @@
   margin-bottom: 8px;
   line-height: 1.45;
 }
+
+/* ── Relatório clínico (devolutiva ao profissional) ── */
+.relatorio-clinico {
+  text-align: left;
+  margin: 8px 0 4px;
+}
+
+.metricas {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.metrica {
+  flex: 1;
+  background: #faf8ff;
+  border: 2px solid #efeaff;
+  border-radius: 14px;
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.metrica strong {
+  display: block;
+  font-size: 1.4rem;
+  color: #7c5cff;
+}
+
+.metrica span {
+  font-size: 0.78rem;
+  color: #8a7bc0;
+}
+
+.rolar-tabela {
+  overflow-x: auto;
+}
+
+.tabela-fonema {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  color: #4a3a7a;
+}
+
+.tabela-fonema th,
+.tabela-fonema td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #efeaff;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tabela-fonema th {
+  color: #8a7bc0;
+  font-weight: 700;
+}
+
+.nota-revisao {
+  font-size: 0.8rem;
+  color: #8a7bc0;
+  line-height: 1.4;
+  margin: 4px 0 10px;
+}
+
+.fila-revisao {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fila-revisao li {
+  background: #faf8ff;
+  border: 2px solid #efeaff;
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.rev-cabecalho {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: #4a3a7a;
+}
+
+.rev-fonema {
+  font-size: 0.78rem;
+  color: #8a7bc0;
+}
+
+.rev-detalhe {
+  font-size: 0.8rem;
+  color: #8a7bc0;
+  margin: 4px 0 8px;
+}
+
+.rev-classificar {
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid #efeaff;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #4a3a7a;
+  font-size: 0.9rem;
+}
+
+.baixar-pdf {
+  margin: 12px 0 4px;
+}
+
+/* ── Metas do fono ── */
+.metas-fono {
+  text-align: left;
+  margin: 6px 0 4px;
+}
+
+.chips-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.chip-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f2edff;
+  color: #4a3a7a;
+  border-radius: 999px;
+  padding: 5px 6px 5px 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.chip-x {
+  border: none;
+  background: #7c5cff;
+  color: #ffffff;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.add-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.add-meta select {
+  flex: 1;
+  padding: 8px 10px;
+  border: 2px solid #efeaff;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #4a3a7a;
+  font-size: 0.9rem;
+}
+
+.add-meta .botao {
+  white-space: nowrap;
+}
+
+.rev-audio {
+  width: 100%;
+  height: 34px;
+  margin: 2px 0 8px;
+}
+
+.consentimento {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  text-align: left;
+  font-size: 0.85rem;
+  color: #5b4a8a;
+  line-height: 1.4;
+  background: #faf8ff;
+  border: 2px solid #efeaff;
+  border-radius: 14px;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.consentimento input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  accent-color: #7c5cff;
+}
+
+.acoes-exportar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 4px;
+}
+
+.exportar {
+  margin-top: 12px;
+}

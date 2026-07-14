@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
-import { buscarProgresso } from './api'
+import { buscarProgresso, definirConsentimentoAudio } from './api'
+import { ExportarTela } from './ExportarTela'
+import { MetasFono } from './MetasFono'
 import { PortaoPin } from './PortaoPin'
+import { RelatorioProfissional } from './RelatorioProfissional'
 import { apagarPin } from './pinAdulto'
 import { PERFIS, type PerfilAvatar } from './avatar/perfis'
 import type { Crianca, Progresso } from './types'
@@ -20,6 +23,18 @@ interface Props {
 export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil, crianca }: Props) {
   const [liberado, setLiberado] = useState(false)
   const [progresso, setProgresso] = useState<Progresso | null>(null)
+  const [consentido, setConsentido] = useState(!!crianca.audioConsentido)
+  const [mostrarExportar, setMostrarExportar] = useState(false)
+
+  const alternarConsentimento = async () => {
+    const novo = !consentido
+    setConsentido(novo)
+    try {
+      await definirConsentimentoAudio(crianca.id, novo)
+    } catch {
+      setConsentido(!novo)
+    }
+  }
 
   useEffect(() => {
     if (liberado) {
@@ -34,6 +49,10 @@ export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil, crianca }: 
 
   if (!liberado) {
     return <PortaoPin aoLiberar={() => setLiberado(true)} aoVoltar={aoVoltar} />
+  }
+
+  if (mostrarExportar) {
+    return <ExportarTela crianca={crianca} aoVoltar={() => setMostrarExportar(false)} />
   }
 
   return (
@@ -87,6 +106,26 @@ export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil, crianca }: 
             </div>
           </>
         )}
+
+        <h2>Metas do profissional</h2>
+        <MetasFono criancaId={crianca.id} />
+
+        <h2>Gravações</h2>
+        <label className="consentimento">
+          <input type="checkbox" checked={consentido} onChange={alternarConsentimento} />
+          <span>
+            Guardar as gravações de {crianca.nome} <strong>neste aparelho</strong> para o(a)
+            fonoaudiólogo(a) ouvir na revisão. Ficam só aqui; ao desligar, as gravações guardadas
+            são apagadas.
+          </span>
+        </label>
+
+        <h2>Relatório clínico</h2>
+        <RelatorioProfissional criancaId={crianca.id} />
+
+        <button className="botao secundario exportar" onClick={() => setMostrarExportar(true)}>
+          Exportar resultados
+        </button>
 
         <div className="orientacoes">
           <h3>Orientações</h3>

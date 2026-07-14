@@ -42,6 +42,7 @@ export interface Crianca {
   nome: string
   emoji: string
   estrelas: number
+  audioConsentido?: boolean
 }
 
 export interface FigurinhaGanha {
@@ -80,6 +81,60 @@ export interface ProgressoFonema {
 export interface Progresso {
   totalTentativas: number
   porFonema: ProgressoFonema[]
+}
+
+// ── Devolutiva ao profissional (Passo 2) ────────────────────────────────
+export type ResultadoAuto = 'CORRETO' | 'ALTERADO' | 'INDETERMINADO'
+export type TipoErroFono = 'CORRETO' | 'OMISSAO' | 'SUBSTITUICAO' | 'DISTORCAO' | 'ADICAO'
+
+export interface ResumoPosicao {
+  posicao: string
+  avaliaveis: number
+  corretas: number
+}
+
+export interface ResumoFonema {
+  fonema: string
+  tentativas: number
+  notaMedia: number
+  producoesAvaliaveis: number
+  producoesCorretas: number
+  porPosicao: ResumoPosicao[]
+}
+
+export interface Relatorio {
+  totalTentativas: number
+  totalProducoes: number
+  sessoes: number
+  percentualProducaoCorreta: number | null
+  vereditosAuto: Record<string, number>
+  errosFono: Record<string, number>
+  porFonema: ResumoFonema[]
+}
+
+export interface Meta {
+  id: number
+  criancaId: number
+  fonema: string
+  criadaEm: string
+}
+
+export interface TentativaResumo {
+  id: number
+  exercicioId: number
+  tipoExercicio: string | null
+  origem: string | null
+  fonemaAlvo: string
+  palavraAlvo: string | null
+  posicaoAlvo: string | null
+  transcricao: string | null
+  notaGeral: number
+  notaFonema: number | null
+  resultadoAuto: ResultadoAuto | null
+  tipoErroFono: TipoErroFono | null
+  sessaoId: string | null
+  criadaEm: string
+  temAudio: boolean
 }
 
 export type EstadoAvatar = 'idle' | 'falando' | 'ouvindo' | 'comemorando' | 'pensando'

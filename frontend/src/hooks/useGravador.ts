@@ -10,7 +10,19 @@ export function useGravador() {
   const chunksRef = useRef<BlobPart[]>([])
 
   const iniciar = useCallback(async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        // Desliga o processamento do navegador: cancelamento de eco, supressão
+        // de ruído e ganho automático distorcem a produção real da criança
+        // (cortam fricativas fracas, bombeiam o ganho) — ruim para a análise
+        // fonética. São dicas: o navegador pode ignorar, mas quando respeita
+        // a gravação fica fiel ao que a criança falou.
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+        channelCount: 1,
+      },
+    })
     const recorder = new MediaRecorder(stream)
     chunksRef.current = []
     recorder.ondataavailable = (e) => chunksRef.current.push(e.data)

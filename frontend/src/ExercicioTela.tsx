@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { enviarResposta, enviarTentativa, listarExercicios } from './api'
+import { enviarResposta, enviarTentativa, listarExercicios, listarMetas } from './api'
 import { Avatar } from './avatar/Avatar'
 import { FigurinhaModal } from './FigurinhaModal'
+import { analisarQualidade } from './fala/qualidadeAudio'
 import { useFala } from './hooks/useFala'
 import { useGravador } from './hooks/useGravador'
 import type { PerfilAvatar } from './avatar/perfis'
@@ -18,6 +19,7 @@ type Fase =
   | 'carregando'
   | 'pronto'
   | 'demonstrando'
+  | 'preparando'
   | 'gravando'
   | 'analisando'
   | 'resultado'
@@ -42,13 +44,16 @@ function sortear(lista: string[]): string {
 /**
  * Ordena a trilha conforme a metodologia (docs/metodologia.md): para cada
  * fonema, primeiro escuta (input), depois percepção (pares mínimos), depois
- * produção (ouça-e-repita) e por fim consciência fonológica (rima).
+ * produção (ouça-e-repita) e por fim consciência fonológica (rima). Os fonemas
+ * marcados como meta pelo fono (Passo 2) vêm primeiro na trilha.
  */
 const ORDEM_TIPOS = { ESCUTA: 0, PARES_MINIMOS: 1, OUCA_E_REPITA: 2, RIMA: 3 } as const
 
-function ordenarTrilha(lista: Exercicio[]): Exercicio[] {
+function ordenarTrilha(lista: Exercicio[], alvos: Set<string> = new Set()): Exercicio[] {
+  const prioridade = (e: Exercicio) => (alvos.has(e.fonemaAlvo) ? 0 : 1)
   return [...lista].sort(
     (a, b) =>
+      prioridade(a) - prioridade(b) ||
       a.fonemaAlvo.localeCompare(b.fonemaAlvo) ||
       ORDEM_TIPOS[a.tipo] - ORDEM_TIPOS[b.tipo] ||
       a.dificuldade - b.dificuldade,
@@ -72,8 +77,10 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
   const [figurinha, setFigurinha] = useState<FigurinhaGanha | null>(null)
   const [mensagem, setMensagem] = useState('')
   const { falar, statusVoz, progressoVoz, getNivelAudio } = useFala()
-  const { gravando, iniciar, parar } = useGravador()
+  const { iniciar, parar } = useGravador()
   const comandoAvatar = useRef<((nome: string) => void) | null>(null)
+  // Agrupa as tentativas desta sessão de brincadeira (uma por abertura da tela)
+  const sessaoId = useRef<string>(crypto.randomUUID())
 
   const cutucado = useCallback(() => {
     falar(REACOES_CUTUCAO[Math.floor(Math.random() * REACOES_CUTUCAO.length)])
@@ -88,9 +95,10 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
   )
 
   useEffect(() => {
-    listarExercicios()
-      .then((bruto) => {
-        const lista = ordenarTrilha(bruto)
+    Promise.all([listarExercicios(), listarMetas(crianca.id).catch(() => [])])
+      .then(([bruto, metas]) => {
+        const alvos = new Set(metas.map((m) => m.fonema))
+        const lista = ordenarTrilha(bruto, alvos)
         setExercicios(lista)
         setFase(lista.length > 0 ? 'pronto' : 'erro')
         if (lista.length === 0) setMensagem('Nenhum exercício encontrado. O backend está no ar?')
@@ -99,7 +107,7 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
         setFase('erro')
         setMensagem('Não consegui falar com o servidor. O backend está no ar?')
       })
-  }, [])
+  }, [crianca.id])
 
   // ── Ouça e repita (produção, Van Riper) ──────────────────────────────
   const demonstrar = useCallback(() => {
@@ -117,6 +125,11 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
   const comecarGravacao = useCallback(async () => {
     try {
       await iniciar()
+      // Pré-roll: o microfone já está gravando, mas seguramos ~700 ms antes de
+      // pedir a fala. Assim o começo da palavra (justo o fonema-alvo, ex. o R
+      // inicial) não é cortado pela latência de início da gravação.
+      setFase('preparando')
+      await new Promise((r) => setTimeout(r, 700))
       setFase('gravando')
     } catch {
       setFase('erro')
@@ -128,7 +141,18 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
     setFase('analisando')
     try {
       const audio = await parar()
-      const r = await enviarTentativa(exercicio.id, crianca.id, audio)
+      // Não manda áudio que não dá para avaliar: pede para repetir com carinho
+      const qualidade = await analisarQualidade(audio)
+      if (!qualidade.ok) {
+        setFase('pronto')
+        falar(
+          qualidade.motivo === 'baixo'
+            ? 'Quase não te ouvi! Fala pertinho e mais alto pra mim?'
+            : 'Foi rapidinho! Fala a palavra inteirinha, tá?',
+        )
+        return
+      }
+      const r = await enviarTentativa(exercicio.id, crianca.id, audio, sessaoId.current)
       setResultado(r.analise)
       setFase('resultado')
       if (r.estrelas !== null) aoGanharEstrelas(r.estrelas)
@@ -156,7 +180,7 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
       if (fase !== 'pronto') return
       setFase('analisando')
       try {
-        const r = await enviarResposta(exercicio.id, crianca.id, palavra)
+        const r = await enviarResposta(exercicio.id, crianca.id, palavra, sessaoId.current)
         setAcertou(r.correta)
         setFase('resultado')
         if (r.estrelas !== null) aoGanharEstrelas(r.estrelas)
@@ -210,7 +234,7 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
   const estadoAvatar: EstadoAvatar =
     fase === 'demonstrando' || fase === 'escutando'
       ? 'falando'
-      : fase === 'gravando'
+      : fase === 'gravando' || fase === 'preparando'
         ? 'ouvindo'
         : fase === 'analisando'
           ? 'pensando'
@@ -338,9 +362,13 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
                     🔊 Ouvir
                   </button>
                   {!eEscolha &&
-                    (gravando ? (
+                    (fase === 'gravando' ? (
                       <button className="botao gravando" onClick={terminarGravacao}>
                         ⏹️ Pronto!
+                      </button>
+                    ) : fase === 'preparando' ? (
+                      <button className="botao" disabled>
+                        Já vai… 🎤
                       </button>
                     ) : (
                       <button className="botao" onClick={comecarGravacao} disabled={fase !== 'pronto'}>
@@ -351,6 +379,8 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
               )}
             </div>
           )}
+          {fase === 'preparando' && <p className="status">Prepara… já já é a sua vez!</p>}
+          {fase === 'gravando' && <p className="status">Estou te ouvindo! 🎤</p>}
           {fase === 'analisando' && <p className="status">O Lalê está pensando...</p>}
         </div>
       )}

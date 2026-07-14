@@ -3,9 +3,13 @@ import type {
   Album,
   Crianca,
   Exercicio,
+  Meta,
   Progresso,
+  Relatorio,
   ResultadoResposta,
   ResultadoTentativa,
+  TentativaResumo,
+  TipoErroFono,
 } from './types'
 
 // Na web/dev fica vazio (URLs relativas + proxy do Vite). No app nativo
@@ -25,18 +29,23 @@ function comStatus(mensagem: string, status: number): Error {
   return erro
 }
 
+function paramSessao(sessaoId?: string): string {
+  return sessaoId ? `&sessaoId=${encodeURIComponent(sessaoId)}` : ''
+}
+
 export async function enviarTentativa(
   exercicioId: number,
   criancaId: number,
   audio: Blob,
+  sessaoId?: string,
 ): Promise<ResultadoTentativa> {
   const wav = await gravacaoParaWav(audio)
   const form = new FormData()
   form.append('audio', wav, 'gravacao.wav')
-  const res = await fetch(`${BASE}/api/exercicios/${exercicioId}/tentativas?criancaId=${criancaId}`, {
-    method: 'POST',
-    body: form,
-  })
+  const res = await fetch(
+    `${BASE}/api/exercicios/${exercicioId}/tentativas?criancaId=${criancaId}${paramSessao(sessaoId)}`,
+    { method: 'POST', body: form },
+  )
   if (!res.ok) throw comStatus(`Erro ao analisar gravação: ${res.status}`, res.status)
   return res.json()
 }
@@ -45,12 +54,16 @@ export async function enviarResposta(
   exercicioId: number,
   criancaId: number,
   escolha: string,
+  sessaoId?: string,
 ): Promise<ResultadoResposta> {
-  const res = await fetch(`${BASE}/api/exercicios/${exercicioId}/respostas?criancaId=${criancaId}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ escolha }),
-  })
+  const res = await fetch(
+    `${BASE}/api/exercicios/${exercicioId}/respostas?criancaId=${criancaId}${paramSessao(sessaoId)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ escolha }),
+    },
+  )
   if (!res.ok) throw comStatus(`Erro ao enviar resposta: ${res.status}`, res.status)
   return res.json()
 }
@@ -60,6 +73,71 @@ export async function buscarProgresso(criancaId?: number): Promise<Progresso> {
   const res = await fetch(`${BASE}/api/progresso${query}`)
   if (!res.ok) throw new Error(`Erro ao buscar progresso: ${res.status}`)
   return res.json()
+}
+
+export async function buscarRelatorio(criancaId: number): Promise<Relatorio> {
+  const res = await fetch(`${BASE}/api/relatorio?criancaId=${criancaId}`)
+  if (!res.ok) throw new Error(`Erro ao buscar relatório: ${res.status}`)
+  return res.json()
+}
+
+export async function listarRevisao(criancaId: number, limite?: number): Promise<TentativaResumo[]> {
+  const q = limite ? `&limite=${limite}` : ''
+  const res = await fetch(`${BASE}/api/tentativas?criancaId=${criancaId}${q}`)
+  if (!res.ok) throw new Error(`Erro ao buscar revisão: ${res.status}`)
+  return res.json()
+}
+
+export async function classificarTentativa(
+  id: number,
+  tipoErroFono: TipoErroFono,
+): Promise<TentativaResumo> {
+  const res = await fetch(`${BASE}/api/tentativas/${id}/classificacao`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tipoErroFono }),
+  })
+  if (!res.ok) throw new Error(`Erro ao classificar: ${res.status}`)
+  return res.json()
+}
+
+export async function listarMetas(criancaId: number): Promise<Meta[]> {
+  const res = await fetch(`${BASE}/api/metas?criancaId=${criancaId}`)
+  if (!res.ok) throw new Error(`Erro ao buscar metas: ${res.status}`)
+  return res.json()
+}
+
+export async function adicionarMeta(criancaId: number, fonema: string): Promise<Meta> {
+  const res = await fetch(`${BASE}/api/metas?criancaId=${criancaId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fonema }),
+  })
+  if (!res.ok) throw new Error(`Erro ao adicionar meta: ${res.status}`)
+  return res.json()
+}
+
+export async function removerMeta(id: number): Promise<void> {
+  const res = await fetch(`${BASE}/api/metas/${id}`, { method: 'DELETE' })
+  if (!res.ok && res.status !== 204) throw new Error(`Erro ao remover meta: ${res.status}`)
+}
+
+export async function definirConsentimentoAudio(
+  criancaId: number,
+  consentido: boolean,
+): Promise<Crianca> {
+  const res = await fetch(`${BASE}/api/criancas/${criancaId}/consentimento-audio`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ consentido }),
+  })
+  if (!res.ok) throw new Error(`Erro ao salvar consentimento: ${res.status}`)
+  return res.json()
+}
+
+/** URL da gravação guardada de uma tentativa (só existe com consentimento). */
+export function urlAudioTentativa(id: number): string {
+  return `${BASE}/api/tentativas/${id}/audio`
 }
 
 export async function listarCriancas(): Promise<Crianca[]> {

@@ -24,7 +24,8 @@ frontend/ios/
 .env.*
 *.local
 
-# Claude Code (overrides pessoais)
+# Claude Code (notas internas de dev e overrides pessoais)
+CLAUDE.md
 .claude/settings.local.json
 
 # SO

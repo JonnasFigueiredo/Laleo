@@ -58,8 +58,8 @@ O nome vem do grego *laleō* (λαλέω), "falar", e junta os dois amiguinhos o
 Fluxo de um exercício: o avatar fala a palavra, a criança grava a repetição, o áudio é
 convertido em WAV no navegador e enviado ao backend, que aciona o serviço de fala (Whisper);
 a nota por fonema retorna, o avatar reage e o progresso é salvo. **A chave da IA e o áudio da
-criança nunca chegam ao cliente** — as regras estão em [CLAUDE.md](CLAUDE.md). Detalhes
-completos em [docs/arquitetura.md](docs/arquitetura.md).
+criança nunca chegam ao cliente.** Detalhes completos em
+[docs/arquitetura.md](docs/arquitetura.md).
 
 ## Como rodar
 

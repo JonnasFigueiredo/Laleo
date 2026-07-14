@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import app.laleo.crianca.GamificacaoService;
+import app.laleo.tentativa.ClassificadorAuto;
 import app.laleo.tentativa.Tentativa;
 import app.laleo.tentativa.TentativaRepository;
 import jakarta.validation.constraints.NotBlank;
@@ -43,6 +44,7 @@ public class RespostaController {
     @PostMapping
     public ResponseEntity<Resultado> responder(@PathVariable Long exercicioId,
             @RequestParam(value = "criancaId", required = false) Long criancaId,
+            @RequestParam(value = "sessaoId", required = false) String sessaoId,
             @RequestBody Resposta resposta) {
         Exercicio exercicio = exercicios.findById(exercicioId).orElse(null);
         if (exercicio == null) {
@@ -53,7 +55,15 @@ public class RespostaController {
         }
         boolean correta = exercicio.getRespostaCorreta().equalsIgnoreCase(resposta.escolha().trim());
         int nota = correta ? 100 : 30;
-        tentativas.save(new Tentativa(exercicioId, criancaId, exercicio.getFonemaAlvo(), nota));
+
+        Tentativa tentativa = new Tentativa(exercicioId, criancaId, exercicio.getFonemaAlvo(), nota);
+        tentativa.setTipoExercicio(exercicio.getTipo() == null ? null : exercicio.getTipo().name());
+        // Tarefa de percepção (não produção): sem transcrição nem tipificação de erro
+        tentativa.setOrigem("ESCOLHA");
+        tentativa.setPalavraAlvo(exercicio.getPalavra());
+        tentativa.setPosicaoAlvo(ClassificadorAuto.posicao(exercicio.getPalavra(), exercicio.getFonemaAlvo()));
+        tentativa.setSessaoId(sessaoId);
+        tentativas.save(tentativa);
 
         var recompensa = gamificacao.registrar(criancaId, nota);
         return ResponseEntity.ok(new Resultado(correta, exercicio.getRespostaCorreta(),

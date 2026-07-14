@@ -2,6 +2,8 @@ package app.laleo.crianca;
 
 import java.time.Instant;
 
+import org.hibernate.annotations.ColumnDefault;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,6 +27,14 @@ public class Crianca {
 
     /** Total de estrelas ganhas (nota ≥ 70 ou acerto em escolha). */
     private int estrelas;
+
+    /**
+     * Consentimento do responsável para guardar as gravações neste aparelho,
+     * para o fono ouvir na revisão. Padrão desligado (fluxo sem áudio). Ao
+     * desligar, o áudio guardado é apagado (LGPD — direito ao apagamento).
+     */
+    @ColumnDefault("false")
+    private boolean audioConsentido;
 
     private Instant criadaEm;
 
@@ -56,6 +66,14 @@ public class Crianca {
 
     public void ganharEstrela() {
         this.estrelas++;
+    }
+
+    public boolean isAudioConsentido() {
+        return audioConsentido;
+    }
+
+    public void setAudioConsentido(boolean audioConsentido) {
+        this.audioConsentido = audioConsentido;
     }
 
     public Instant getCriadaEm() {

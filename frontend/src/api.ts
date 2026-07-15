@@ -1,4 +1,5 @@
 import { gravacaoParaWav } from './fala/paraWav'
+import { cabecalhoAdulto, tokenAdulto } from './pinAdulto'
 import type {
   Album,
   Crianca,
@@ -70,20 +71,34 @@ export async function enviarResposta(
 
 export async function buscarProgresso(criancaId?: number): Promise<Progresso> {
   const query = criancaId ? `?criancaId=${criancaId}` : ''
-  const res = await fetch(`${BASE}/api/progresso${query}`)
+  const res = await fetch(`${BASE}/api/progresso${query}`, { headers: cabecalhoAdulto() })
   if (!res.ok) throw new Error(`Erro ao buscar progresso: ${res.status}`)
   return res.json()
 }
 
+export async function buscarCrianca(id: number): Promise<Crianca> {
+  const res = await fetch(`${BASE}/api/criancas/${id}`)
+  if (!res.ok) throw new Error(`Erro ao buscar criança: ${res.status}`)
+  return res.json()
+}
+
 export async function buscarRelatorio(criancaId: number): Promise<Relatorio> {
-  const res = await fetch(`${BASE}/api/relatorio?criancaId=${criancaId}`)
+  const res = await fetch(`${BASE}/api/relatorio?criancaId=${criancaId}`, {
+    headers: cabecalhoAdulto(),
+  })
   if (!res.ok) throw new Error(`Erro ao buscar relatório: ${res.status}`)
   return res.json()
 }
 
-export async function listarRevisao(criancaId: number, limite?: number): Promise<TentativaResumo[]> {
-  const q = limite ? `&limite=${limite}` : ''
-  const res = await fetch(`${BASE}/api/tentativas?criancaId=${criancaId}${q}`)
+export async function listarRevisao(
+  criancaId: number,
+  limite?: number,
+  origem?: 'TODAS',
+): Promise<TentativaResumo[]> {
+  const q = (limite ? `&limite=${limite}` : '') + (origem ? `&origem=${origem}` : '')
+  const res = await fetch(`${BASE}/api/tentativas?criancaId=${criancaId}${q}`, {
+    headers: cabecalhoAdulto(),
+  })
   if (!res.ok) throw new Error(`Erro ao buscar revisão: ${res.status}`)
   return res.json()
 }
@@ -94,7 +109,7 @@ export async function classificarTentativa(
 ): Promise<TentativaResumo> {
   const res = await fetch(`${BASE}/api/tentativas/${id}/classificacao`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...cabecalhoAdulto() },
     body: JSON.stringify({ tipoErroFono }),
   })
   if (!res.ok) throw new Error(`Erro ao classificar: ${res.status}`)
@@ -110,7 +125,7 @@ export async function listarMetas(criancaId: number): Promise<Meta[]> {
 export async function adicionarMeta(criancaId: number, fonema: string): Promise<Meta> {
   const res = await fetch(`${BASE}/api/metas?criancaId=${criancaId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...cabecalhoAdulto() },
     body: JSON.stringify({ fonema }),
   })
   if (!res.ok) throw new Error(`Erro ao adicionar meta: ${res.status}`)
@@ -118,7 +133,10 @@ export async function adicionarMeta(criancaId: number, fonema: string): Promise<
 }
 
 export async function removerMeta(id: number): Promise<void> {
-  const res = await fetch(`${BASE}/api/metas/${id}`, { method: 'DELETE' })
+  const res = await fetch(`${BASE}/api/metas/${id}`, {
+    method: 'DELETE',
+    headers: cabecalhoAdulto(),
+  })
   if (!res.ok && res.status !== 204) throw new Error(`Erro ao remover meta: ${res.status}`)
 }
 
@@ -128,16 +146,20 @@ export async function definirConsentimentoAudio(
 ): Promise<Crianca> {
   const res = await fetch(`${BASE}/api/criancas/${criancaId}/consentimento-audio`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...cabecalhoAdulto() },
     body: JSON.stringify({ consentido }),
   })
   if (!res.ok) throw new Error(`Erro ao salvar consentimento: ${res.status}`)
   return res.json()
 }
 
-/** URL da gravação guardada de uma tentativa (só existe com consentimento). */
+/**
+ * URL da gravação guardada de uma tentativa (só existe com consentimento).
+ * O <audio> não envia headers, então o token da sessão adulta vai na query.
+ */
 export function urlAudioTentativa(id: number): string {
-  return `${BASE}/api/tentativas/${id}/audio`
+  const token = tokenAdulto()
+  return `${BASE}/api/tentativas/${id}/audio${token ? `?token=${encodeURIComponent(token)}` : ''}`
 }
 
 export async function listarCriancas(): Promise<Crianca[]> {

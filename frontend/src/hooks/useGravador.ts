@@ -10,6 +10,9 @@ export function useGravador() {
   const chunksRef = useRef<BlobPart[]>([])
 
   const iniciar = useCallback(async () => {
+    // Reentrada (duplo toque): não abre um segundo stream por cima do primeiro —
+    // o anterior perderia a referência e o microfone ficaria capturando para sempre
+    if (recorderRef.current?.state === 'recording') return
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: {
         // Desliga o processamento do navegador: cancelamento de eco, supressão

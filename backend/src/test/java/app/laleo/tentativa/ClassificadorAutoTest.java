@@ -38,6 +38,15 @@ class ClassificadorAutoTest {
     }
 
     @Test
+    void normalizacaoPreservaEspacosComoNoSpeechService() {
+        // Alvos com mais de uma palavra: a mesma normalização do pontuacao.mjs,
+        // senão a nota do serviço e o veredito daqui divergem
+        assertThat(ClassificadorAuto.normalizar("Céu  Azul!")).isEqualTo("ceu azul");
+        assertThat(ClassificadorAuto.classificar("Céu azul", "S", "ceu azul"))
+                .isEqualTo(ResultadoAuto.CORRETO);
+    }
+
+    @Test
     void semTranscricaoEhIndeterminado() {
         assertThat(ClassificadorAuto.classificar("Rato", "R", "")).isEqualTo(ResultadoAuto.INDETERMINADO);
         assertThat(ClassificadorAuto.classificar("Rato", "R", null)).isEqualTo(ResultadoAuto.INDETERMINADO);

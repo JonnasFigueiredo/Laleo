@@ -2,6 +2,11 @@ import { useCallback, useEffect, useState } from 'react'
 import { buscarRelatorio, classificarTentativa, listarRevisao, urlAudioTentativa } from './api'
 import type { Relatorio, TentativaResumo, TipoErroFono } from './types'
 
+/** I/M/F para posições reais; '?' para INDEFINIDA — '[0]' cru colidia I com I(ndefinida). */
+function rotuloPosicao(posicao: string): string {
+  return posicao === 'INDEFINIDA' ? '?' : posicao.charAt(0)
+}
+
 const TIPOS_ERRO: { valor: TipoErroFono; rotulo: string }[] = [
   { valor: 'CORRETO', rotulo: 'Correto' },
   { valor: 'OMISSAO', rotulo: 'Omissão' },
@@ -34,8 +39,12 @@ export function RelatorioProfissional({ criancaId }: { criancaId: number }) {
 
   const classificar = async (id: number, tipo: TipoErroFono) => {
     try {
-      await classificarTentativa(id, tipo)
-      carregar()
+      // Atualiza a linha localmente com a resposta do POST e refaz só as
+      // métricas — recarregar a fila inteira a cada rótulo era caro e
+      // atrapalhava o fono classificando vários seguidos
+      const atualizada = await classificarTentativa(id, tipo)
+      setFila((atual) => atual.map((t) => (t.id === id ? atualizada : t)))
+      buscarRelatorio(criancaId).then(setRel).catch(() => setErro(true))
     } catch {
       setErro(true)
     }
@@ -86,7 +95,7 @@ export function RelatorioProfissional({ criancaId }: { criancaId: number }) {
                   {f.porPosicao.length === 0
                     ? '—'
                     : f.porPosicao
-                        .map((p) => `${p.posicao[0]}: ${p.corretas}/${p.avaliaveis}`)
+                        .map((p) => `${rotuloPosicao(p.posicao)}: ${p.corretas}/${p.avaliaveis}`)
                         .join('  ')}
                 </td>
               </tr>

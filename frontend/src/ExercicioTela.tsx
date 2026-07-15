@@ -5,6 +5,7 @@ import { FigurinhaModal } from './FigurinhaModal'
 import { analisarQualidade } from './fala/qualidadeAudio'
 import { useFala } from './hooks/useFala'
 import { useGravador } from './hooks/useGravador'
+import { obterSessaoId } from './sessao'
 import type { PerfilAvatar } from './avatar/perfis'
 import {
   parsearOpcoes,
@@ -79,8 +80,8 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
   const { falar, statusVoz, progressoVoz, getNivelAudio } = useFala()
   const { iniciar, parar } = useGravador()
   const comandoAvatar = useRef<((nome: string) => void) | null>(null)
-  // Agrupa as tentativas desta sessão de brincadeira (uma por abertura da tela)
-  const sessaoId = useRef<string>(crypto.randomUUID())
+  // Sessão da sentada (sessionStorage): remontar a tela não infla a métrica
+  const sessaoId = useRef<string>(obterSessaoId(crianca.id))
 
   const cutucado = useCallback(() => {
     falar(REACOES_CUTUCAO[Math.floor(Math.random() * REACOES_CUTUCAO.length)])
@@ -123,12 +124,14 @@ export function ExercicioTela({ perfil, crianca, estrelas, aoGanharEstrelas }: P
   }, [exercicio, falar, opcoes])
 
   const comecarGravacao = useCallback(async () => {
+    // Sai de 'pronto' ANTES do await: o botão desabilita já no primeiro toque
+    // (duplo toque abria dois streams de microfone e o primeiro nunca fechava)
+    setFase('preparando')
     try {
       await iniciar()
       // Pré-roll: o microfone já está gravando, mas seguramos ~700 ms antes de
       // pedir a fala. Assim o começo da palavra (justo o fonema-alvo, ex. o R
       // inicial) não é cortado pela latência de início da gravação.
-      setFase('preparando')
       await new Promise((r) => setTimeout(r, 700))
       setFase('gravando')
     } catch {

@@ -61,7 +61,8 @@ public class TentativaController {
         if (exercicio == null) {
             return ResponseEntity.notFound().build();
         }
-        AnaliseFala analise = falaService.analisar(audio.getBytes(), exercicio.getPalavra(),
+        byte[] bytes = audio.getBytes();
+        AnaliseFala analise = falaService.analisar(bytes, exercicio.getPalavra(),
                 exercicio.getFonemaAlvo());
 
         Tentativa tentativa = new Tentativa(exercicioId, criancaId, exercicio.getFonemaAlvo(),
@@ -76,13 +77,19 @@ public class TentativaController {
                 ClassificadorAuto.classificar(exercicio.getPalavra(), exercicio.getFonemaAlvo(),
                         analise.transcricao()));
         tentativa.setSessaoId(sessaoId);
-        tentativas.save(tentativa);
-
         // Só guarda o áudio se o responsável consentiu (fica local; ver ArmazenamentoAudio)
-        if (criancaId != null && temConsentimento(criancaId)) {
-            armazenamentoAudio.salvar(tentativa.getId(), audio.getBytes());
-            tentativa.setTemAudio(true);
-            tentativas.save(tentativa);
+        boolean guardarAudio = criancaId != null && temConsentimento(criancaId);
+        tentativa.setTemAudio(guardarAudio);
+        tentativas.save(tentativa);
+        if (guardarAudio) {
+            armazenamentoAudio.salvar(tentativa.getId(), bytes);
+            // Fecha a corrida com a revogação: se o consentimento caiu enquanto
+            // gravávamos, o arquivo não pode sobreviver (LGPD)
+            if (!temConsentimento(criancaId)) {
+                armazenamentoAudio.apagar(tentativa.getId());
+                tentativa.setTemAudio(false);
+                tentativas.save(tentativa);
+            }
         }
 
         var recompensa = gamificacao.registrar(criancaId, analise.notaGeral());

@@ -99,6 +99,13 @@ de integração e ao vivo.
 (imprimível, autocontido) e **CSV** com cada tentativa para análise em planilha.
 Tudo gerado localmente.
 
+**Segurança no servidor (pós-revisão).** O PIN da área dos adultos passou a ser
+verificado **no backend** (`AdultoAuthService`), que emite um token de sessão
+exigido pelos endpoints sensíveis — fila de revisão, áudio das crianças,
+relatório, progresso, metas (escrita) e consentimento. Antes o PIN vivia só no
+localStorage e qualquer aparelho na rede podia baixar as gravações por id. O
+fluxo da criança (exercícios, tentativas, GET de metas) segue sem PIN.
+
 ## Passo 1 — o que foi entregue
 
 **Dados (backend).** `Tentativa` passou a guardar, além de fonema e nota geral:

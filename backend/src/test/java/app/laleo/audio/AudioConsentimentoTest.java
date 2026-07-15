@@ -43,14 +43,14 @@ class AudioConsentimentoTest {
 
         // Sem consentimento: nada é guardado
         producao.analisar(ex.getId(), c.getId(), "s1", audio);
-        var t1 = revisao.listar(c.getId(), null).get(0);
+        var t1 = revisao.listar(c.getId(), null, null).get(0);
         assertThat(t1.temAudio()).isFalse();
         assertThat(revisao.audio(t1.id()).getStatusCode().value()).isEqualTo(404);
 
         // Com consentimento: a próxima gravação é guardada e pode ser ouvida
         criancaCtrl.consentimentoAudio(c.getId(), new CriancaController.Consentimento(true));
         producao.analisar(ex.getId(), c.getId(), "s1", audio);
-        var comAudio = revisao.listar(c.getId(), null).stream()
+        var comAudio = revisao.listar(c.getId(), null, null).stream()
                 .filter(RevisaoController.TentativaResumo::temAudio)
                 .findFirst()
                 .orElseThrow();

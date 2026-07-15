@@ -52,15 +52,20 @@ public class RevisaoController {
         this.armazenamentoAudio = armazenamentoAudio;
     }
 
-    /** Produções da criança, mais recentes primeiro (fila de revisão). */
+    /**
+     * Tentativas da criança, mais recentes primeiro. Sem `origem`, devolve só
+     * produções (fila de revisão); com `origem=TODAS`, devolve tudo (exportação).
+     */
     @GetMapping
     public List<TentativaResumo> listar(@RequestParam("criancaId") Long criancaId,
-            @RequestParam(value = "limite", required = false) Integer limite) {
+            @RequestParam(value = "limite", required = false) Integer limite,
+            @RequestParam(value = "origem", required = false) String origem) {
         int max = limite == null || limite <= 0 ? LIMITE_PADRAO : limite;
-        return tentativas.findByCriancaIdAndOrigemOrderByCriadaEmDesc(criancaId, "PRODUCAO").stream()
-                .limit(max)
-                .map(TentativaResumo::de)
-                .toList();
+        var pagina = org.springframework.data.domain.PageRequest.of(0, max);
+        List<Tentativa> lista = "TODAS".equalsIgnoreCase(origem)
+                ? tentativas.findByCriancaIdOrderByCriadaEmDesc(criancaId, pagina)
+                : tentativas.findByCriancaIdAndOrigemOrderByCriadaEmDesc(criancaId, "PRODUCAO", pagina);
+        return lista.stream().map(TentativaResumo::de).toList();
     }
 
     /** Gravação guardada (só existe com consentimento) — o fono ouve na revisão. */

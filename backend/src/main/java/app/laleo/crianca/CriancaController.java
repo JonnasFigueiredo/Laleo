@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -61,6 +62,7 @@ public class CriancaController {
      * Consentimento do responsável para guardar as gravações localmente. Ao
      * desligar, apaga as gravações já guardadas (LGPD — direito ao apagamento).
      */
+    @Transactional
     @PostMapping("/{id}/consentimento-audio")
     public ResponseEntity<Crianca> consentimentoAudio(@PathVariable Long id,
             @RequestBody Consentimento corpo) {
@@ -71,13 +73,10 @@ public class CriancaController {
         crianca.setAudioConsentido(corpo.consentido());
         criancas.save(crianca);
         if (!corpo.consentido()) {
-            for (Tentativa t : tentativas.findByCriancaId(id)) {
-                if (t.isTemAudio()) {
-                    armazenamentoAudio.apagar(t.getId());
-                    t.setTemAudio(false);
-                    tentativas.save(t);
-                }
+            for (Tentativa t : tentativas.findByCriancaIdAndTemAudioTrue(id)) {
+                armazenamentoAudio.apagar(t.getId());
             }
+            tentativas.limparAudio(id); // um único UPDATE, sem N+1
         }
         return ResponseEntity.ok(crianca);
     }

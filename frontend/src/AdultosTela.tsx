@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { buscarProgresso, definirConsentimentoAudio } from './api'
+import { buscarCrianca, buscarProgresso, definirConsentimentoAudio } from './api'
 import { ExportarTela } from './ExportarTela'
 import { MetasFono } from './MetasFono'
 import { PortaoPin } from './PortaoPin'
@@ -25,12 +25,16 @@ export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil, crianca }: 
   const [progresso, setProgresso] = useState<Progresso | null>(null)
   const [consentido, setConsentido] = useState(!!crianca.audioConsentido)
   const [mostrarExportar, setMostrarExportar] = useState(false)
+  // Muda a cada alteração de consentimento → remonta o relatório, para os
+  // players de áudio não apontarem para gravações recém-apagadas
+  const [versaoConsentimento, setVersaoConsentimento] = useState(0)
 
   const alternarConsentimento = async () => {
     const novo = !consentido
     setConsentido(novo)
     try {
       await definirConsentimentoAudio(crianca.id, novo)
+      setVersaoConsentimento((v) => v + 1)
     } catch {
       setConsentido(!novo)
     }
@@ -39,12 +43,16 @@ export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil, crianca }: 
   useEffect(() => {
     if (liberado) {
       buscarProgresso(crianca.id).then(setProgresso).catch(() => setProgresso(null))
+      // O `crianca` do App pode estar velho (não é atualizado após o toggle):
+      // o estado real do consentimento vem sempre do servidor
+      buscarCrianca(crianca.id)
+        .then((c) => setConsentido(!!c.audioConsentido))
+        .catch(() => {})
     }
   }, [liberado, crianca.id])
 
   const trocarPin = () => {
-    apagarPin()
-    setLiberado(false)
+    void apagarPin().finally(() => setLiberado(false))
   }
 
   if (!liberado) {
@@ -121,7 +129,7 @@ export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil, crianca }: 
         </label>
 
         <h2>Relatório clínico</h2>
-        <RelatorioProfissional criancaId={crianca.id} />
+        <RelatorioProfissional key={versaoConsentimento} criancaId={crianca.id} />
 
         <button className="botao secundario exportar" onClick={() => setMostrarExportar(true)}>
           Exportar resultados

@@ -21,8 +21,14 @@ public final class ClassificadorAuto {
         if (texto == null) {
             return "";
         }
+        // Mesma normalização do speech-service (pontuacao.mjs): preserva espaços
+        // simples, para os dois lados calcularem a MESMA similaridade em alvos
+        // com mais de uma palavra — divergir aqui gera nota e veredito em conflito
         String semAcento = Normalizer.normalize(texto, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
-        return semAcento.toLowerCase().replaceAll("[^a-z0-9]", "");
+        return semAcento.toLowerCase()
+                .replaceAll("[^a-z0-9 ]", "")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     /** INICIAL / MEDIAL / FINAL, ou null se o grafema-alvo não aparece na palavra. */

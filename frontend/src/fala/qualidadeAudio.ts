@@ -20,8 +20,11 @@ export interface QualidadeAudio {
 }
 
 // Limiares iniciais, ajustáveis com dados reais (ver roadmap-clinico.md).
+// RMS_MINIMO = MESMO valor do gate do speech-service (servidor.mjs): um gate
+// local mais rígido rejeitava fala baixinha que o pipeline aceitaria — e com o
+// ganho automático desligado (useGravador) a criança quieta grava ainda mais baixo.
 const DURACAO_MINIMA_MS = 300
-const RMS_MINIMO = 0.01
+const RMS_MINIMO = 0.005
 
 export async function analisarQualidade(gravacao: Blob): Promise<QualidadeAudio> {
   const ctx = new AudioContext()

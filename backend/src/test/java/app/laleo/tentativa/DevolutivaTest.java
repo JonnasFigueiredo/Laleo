@@ -42,7 +42,7 @@ class DevolutivaTest {
         assertThat(antes.vereditosAuto()).containsEntry("CORRETO", 2L);
 
         // Fila de revisão lista as duas produções
-        var fila = revisao.listar(crianca, null);
+        var fila = revisao.listar(crianca, null, null);
         assertThat(fila).hasSize(2);
 
         // O fono reclassifica uma como SUBSTITUICAO — a métrica passa a valer a verdade dele

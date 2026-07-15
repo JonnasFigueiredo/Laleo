@@ -21,19 +21,28 @@ export function ExportarTela({ crianca, aoVoltar }: Props) {
     buscarRelatorio(crianca.id)
       .then(setRel)
       .catch(() => setRel(null))
-    listarRevisao(crianca.id, 1000)
+    // TODAS as origens: o CSV precisa das tarefas de percepção também,
+    // não só das produções da fila de revisão
+    listarRevisao(crianca.id, 1000, 'TODAS')
       .then(setTentativas)
       .catch(() => setTentativas([]))
   }, [crianca.id])
 
   const baixarPdf = () => {
     if (!rel) return
-    const janela = window.open('', '_blank')
-    if (!janela) return
-    janela.document.write(htmlRelatorio(rel, crianca.nome))
-    janela.document.close()
-    janela.focus()
-    janela.print()
+    // iframe oculto em vez de window.open: bloqueadores de popup (padrão em
+    // WebView/Capacitor) faziam o botão falhar em silêncio
+    const iframe = document.createElement('iframe')
+    iframe.style.display = 'none'
+    iframe.srcdoc = htmlRelatorio(rel, crianca.nome)
+    iframe.onload = () => {
+      iframe.contentWindow?.focus()
+      iframe.contentWindow?.print()
+      // remove depois da impressão sair da fila (print é síncrono na maioria
+      // dos navegadores, mas alguns disparam onload antes do diálogo fechar)
+      setTimeout(() => iframe.remove(), 60_000)
+    }
+    document.body.appendChild(iframe)
   }
 
   const baixarCsv = () => {
@@ -134,10 +143,16 @@ function paraCsv(tentativas: TentativaResumo[]): string {
 }
 
 function celulaCsv(valor: string): string {
-  if (/[";\r\n]/.test(valor)) {
-    return `"${valor.replace(/"/g, '""')}"`
+  // Célula começando com = + - @ executaria como fórmula no Excel/Sheets
+  // (injeção via CSV); o apóstrofo neutraliza sem alterar a leitura
+  let v = valor
+  if (/^[=+\-@]/.test(v)) {
+    v = `'${v}`
   }
-  return valor
+  if (/[";\r\n]/.test(v)) {
+    return `"${v.replace(/"/g, '""')}"`
+  }
+  return v
 }
 
 function baixarArquivo(nome: string, conteudo: string, tipo: string) {

@@ -1,51 +1,72 @@
 import { useCallback, useEffect, useState } from 'react'
-import { definirPin, temPin, verificarPin } from './pinAdulto'
+import { entrarComPin, temPin } from './pinAdulto'
 
 interface Props {
   aoLiberar: () => void
   aoVoltar: () => void
 }
 
-type Fase = 'digitar' | 'criar' | 'confirmar'
+type Fase = 'carregando' | 'digitar' | 'criar' | 'confirmar'
 
 /**
  * Portão de PIN da área dos adultos. Na primeira vez pede para criar um
- * PIN de 4 dígitos (com confirmação); depois pede o PIN para entrar.
- * Teclado numérico grande, adequado a toque.
+ * PIN de 4 dígitos (com confirmação); depois pede o PIN para entrar. A
+ * verificação acontece no servidor (ver pinAdulto.ts), que emite o token
+ * exigido pelos endpoints sensíveis. Teclado numérico grande, para toque.
  */
 export function PortaoPin({ aoLiberar, aoVoltar }: Props) {
-  const [fase, setFase] = useState<Fase>(temPin() ? 'digitar' : 'criar')
+  const [fase, setFase] = useState<Fase>('carregando')
   const [digitos, setDigitos] = useState('')
   const [primeiro, setPrimeiro] = useState('')
   const [erro, setErro] = useState('')
+
+  useEffect(() => {
+    temPin()
+      .then((existe) => setFase(existe ? 'digitar' : 'criar'))
+      .catch(() => {
+        setFase('digitar')
+        setErro('Não consegui falar com o servidor. Ele está no ar?')
+      })
+  }, [])
 
   const titulo =
     fase === 'digitar' ? 'Digite o PIN' : fase === 'criar' ? 'Crie um PIN de 4 dígitos' : 'Confirme o PIN'
 
   const processar = useCallback(
     async (pin: string) => {
-      if (fase === 'digitar') {
-        if (await verificarPin(pin)) {
-          aoLiberar()
-        } else {
-          setErro('PIN incorreto. Tente de novo.')
+      try {
+        if (fase === 'digitar') {
+          if (await entrarComPin(pin)) {
+            aoLiberar()
+          } else {
+            setErro('PIN incorreto. Tente de novo.')
+            setDigitos('')
+          }
+        } else if (fase === 'criar') {
+          setPrimeiro(pin)
           setDigitos('')
+          setErro('')
+          setFase('confirmar')
+        } else {
+          if (pin === primeiro) {
+            if (await entrarComPin(pin)) {
+              aoLiberar()
+            } else {
+              // Outro aparelho criou um PIN diferente nesse meio-tempo
+              setErro('Já existe um PIN diferente. Digite o PIN atual.')
+              setDigitos('')
+              setFase('digitar')
+            }
+          } else {
+            setErro('Os PINs não coincidem. Vamos de novo.')
+            setPrimeiro('')
+            setDigitos('')
+            setFase('criar')
+          }
         }
-      } else if (fase === 'criar') {
-        setPrimeiro(pin)
+      } catch {
+        setErro('Não consegui falar com o servidor. Tente de novo.')
         setDigitos('')
-        setErro('')
-        setFase('confirmar')
-      } else {
-        if (pin === primeiro) {
-          await definirPin(pin)
-          aoLiberar()
-        } else {
-          setErro('Os PINs não coincidem. Vamos de novo.')
-          setPrimeiro('')
-          setDigitos('')
-          setFase('criar')
-        }
       }
     },
     [fase, primeiro, aoLiberar],
@@ -73,7 +94,7 @@ export function PortaoPin({ aoLiberar, aoVoltar }: Props) {
     <div className="tela">
       <div className="cartao adultos pin-cartao">
         <h2>Área dos adultos</h2>
-        <p className="fonema">{titulo}</p>
+        <p className="fonema">{fase === 'carregando' ? 'Um instante…' : titulo}</p>
 
         <div className="pin-pontos">
           {[0, 1, 2, 3].map((i) => (
@@ -85,14 +106,14 @@ export function PortaoPin({ aoLiberar, aoVoltar }: Props) {
 
         <div className="teclado-pin">
           {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
-            <button key={d} className="tecla-pin" onClick={() => teclar(d)}>
+            <button key={d} className="tecla-pin" disabled={fase === 'carregando'} onClick={() => teclar(d)}>
               {d}
             </button>
           ))}
           <button className="tecla-pin vazia" onClick={aoVoltar} aria-label="Voltar">
             ↩
           </button>
-          <button className="tecla-pin" onClick={() => teclar('0')}>
+          <button className="tecla-pin" disabled={fase === 'carregando'} onClick={() => teclar('0')}>
             0
           </button>
           <button className="tecla-pin vazia" onClick={apagar} aria-label="Apagar">

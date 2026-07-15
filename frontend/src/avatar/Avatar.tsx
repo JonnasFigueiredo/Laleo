@@ -38,7 +38,9 @@ const CLIPES: Record<string, string> = {
   vergonha: '/animacoes/vergonha.vrma',
   soneca: '/animacoes/soneca.vrma',
 }
-const CLIPES_UMA_VEZ = new Set(['acenar', 'olhar', 'surpresa', 'vergonha'])
+// soneca é uma-vez COM trava: o clipe é "bocejar e adormecer" — em loop ele
+// reiniciava do zero (deita, volta em pé num pulo, deita...) sem parar
+const CLIPES_UMA_VEZ = new Set(['acenar', 'olhar', 'surpresa', 'vergonha', 'soneca'])
 const COMEMORACOES = ['pular', 'palmas']
 const REACOES_CUTUCAO = ['surpresa', 'vergonha']
 const SEGUNDOS_ATE_SONECA = 45
@@ -208,6 +210,9 @@ export function Avatar({ estado, modelo, getNivelAudio, aoCutucar, comandoRef }:
       mixer!.addEventListener('finished', (evento) => {
         if (descartado) return
         umaVezRodando = false
+        // Exceção: a soneca TERMINA dormindo — fica travada na pose final
+        // (clampWhenFinished) até a criança interagir e o loop acordá-la
+        if (acaoAtual === 'soneca') return
         const idle = acoes.idle
         const terminada = (evento as unknown as { action: THREE.AnimationAction }).action
         if (!idle || terminada === idle) return

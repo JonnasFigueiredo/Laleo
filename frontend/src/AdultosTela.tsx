@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { buscarCrianca, buscarProgresso, definirConsentimentoAudio } from './api'
+import { buscarAlbum, buscarCrianca, buscarProgresso, definirConsentimentoAudio } from './api'
 import { ExportarTela } from './ExportarTela'
 import { MetasFono } from './MetasFono'
 import { PortaoPin } from './PortaoPin'
 import { RelatorioProfissional } from './RelatorioProfissional'
 import { apagarPin } from './pinAdulto'
-import { PERFIS, type PerfilAvatar } from './avatar/perfis'
+import { PERFIS, perfilDisponivel, type PerfilAvatar } from './avatar/perfis'
 import type { Crianca, Progresso } from './types'
 
 interface Props {
@@ -23,6 +23,7 @@ interface Props {
 export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil, crianca }: Props) {
   const [liberado, setLiberado] = useState(false)
   const [progresso, setProgresso] = useState<Progresso | null>(null)
+  const [figurinhas, setFigurinhas] = useState(0)
   const [consentido, setConsentido] = useState(!!crianca.audioConsentido)
   const [mostrarExportar, setMostrarExportar] = useState(false)
   // Muda a cada alteração de consentimento → remonta o relatório, para os
@@ -48,6 +49,10 @@ export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil, crianca }: 
       buscarCrianca(crianca.id)
         .then((c) => setConsentido(!!c.audioConsentido))
         .catch(() => {})
+      // Desbloqueio de avatar (ex.: Moranguinha com 10 figurinhas)
+      buscarAlbum(crianca.id)
+        .then((a) => setFigurinhas(a.ganhas.length))
+        .catch(() => setFigurinhas(0))
     }
   }, [liberado, crianca.id])
 
@@ -69,17 +74,33 @@ export function AdultosTela({ aoVoltar, perfilAtual, aoTrocarPerfil, crianca }: 
         <h2>Amiguinho da criança</h2>
         <p>Escolha quem vai guiar os exercícios — a voz acompanha o personagem.</p>
         <div className="opcoes">
-          {PERFIS.map((p) => (
-            <button
-              key={p.id}
-              className={p.id === perfilAtual.id ? 'cartao-opcao selecionado' : 'cartao-opcao'}
-              onClick={() => aoTrocarPerfil(p)}
-            >
-              <span className="opcao-emoji">{p.emoji}</span>
-              <span className="opcao-palavra">{p.nome}</span>
-              {p.id === perfilAtual.id && <span className="marca-selecao">✓ escolhido</span>}
-            </button>
-          ))}
+          {PERFIS.map((p) => {
+            const liberadoPerfil = perfilDisponivel(p, figurinhas)
+            return (
+              <button
+                key={p.id}
+                className={
+                  !liberadoPerfil
+                    ? 'cartao-opcao bloqueado'
+                    : p.id === perfilAtual.id
+                      ? 'cartao-opcao selecionado'
+                      : 'cartao-opcao'
+                }
+                disabled={!liberadoPerfil}
+                onClick={() => aoTrocarPerfil(p)}
+              >
+                <span className="opcao-emoji">{liberadoPerfil ? p.emoji : '🔒'}</span>
+                <span className="opcao-palavra">{p.nome}</span>
+                {!liberadoPerfil ? (
+                  <span className="marca-selecao">
+                    {figurinhas}/{p.desbloqueioFigurinhas} figurinhas
+                  </span>
+                ) : (
+                  p.id === perfilAtual.id && <span className="marca-selecao">✓ escolhido</span>
+                )}
+              </button>
+            )
+          })}
         </div>
 
         <h2>

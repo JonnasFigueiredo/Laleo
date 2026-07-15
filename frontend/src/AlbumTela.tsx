@@ -40,6 +40,18 @@ export function AlbumTela({ crianca, estrelas, aoVoltar }: Props) {
               {ganhas.length} de {album.totalCatalogo} figurinhas!{' '}
               {faltam > 0 ? 'Continue treinando para ganhar mais!' : 'Álbum completo, parabéns! 🎉'}
             </p>
+            {/* Recompensa de longo prazo: Moranguinha destrava com 10 figurinhas */}
+            {ganhas.length < 10 ? (
+              <p className="dica-desbloqueio">
+                🔒🍓 Com <strong>10 figurinhas</strong> uma amiguinha surpresa aparece! Faltam{' '}
+                {10 - ganhas.length}.
+              </p>
+            ) : (
+              <p className="dica-desbloqueio desbloqueada">
+                🍓 A <strong>Moranguinha</strong> chegou! Peça a um adulto para escolher ela na
+                área dos responsáveis.
+              </p>
+            )}
             <div className="grade-figurinhas">
               {ganhas.map((f) => (
                 <div key={f.id} className="figurinha" title={f.nome}>

@@ -325,7 +325,12 @@ export function Avatar({ estado, modelo, getNivelAudio, aoCutucar, comandoRef }:
 
         raiz.position.y = 0
         raiz.rotation.set(0, GIRO_FRENTE, 0)
-        setExpressao('happy', 0)
+        // Sorriso de descanso: cara neutra parece séria demais para criança.
+        // Peso BAIXO de propósito: neste modelo os presets de alegria também
+        // fecham os olhos — 0.2 curva a boca sem deixar o olhar sonolento.
+        // Desvanece conforme a boca abre (lipsync), para não distorcer vogais.
+        setExpressao('relaxed', 0)
+        setExpressao('happy', 0.2 * (1 - bocaSuave))
 
         if (est !== 'idle') ultimaInteracao = t
 
@@ -359,7 +364,7 @@ export function Avatar({ estado, modelo, getNivelAudio, aoCutucar, comandoRef }:
             // Inclinação aplicada depois do mixer: sobrepõe a animação
             cabeca.rotation.z = 0.14
             cabeca.rotation.x = 0.08
-            setExpressao('happy', 0.25)
+            setExpressao('happy', 0.45)
           }
           if (acaoAtual === 'soneca') {
             setExpressao('blink', 1) // olhinhos fechados dormindo
@@ -376,7 +381,7 @@ export function Avatar({ estado, modelo, getNivelAudio, aoCutucar, comandoRef }:
               cabeca.rotation.z = 0.14
               cabeca.rotation.x = 0.08
             }
-            setExpressao('happy', 0.25)
+            setExpressao('happy', 0.45)
           } else if (est === 'comemorando') {
             raiz.position.y = Math.abs(Math.sin(t * 5.5)) * 0.06
             const balanco = -0.5 - Math.sin(t * 7) * 0.25

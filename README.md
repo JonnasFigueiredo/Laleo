@@ -36,7 +36,8 @@ O nome vem do grego *laleō* (λαλέω), "falar", e junta os dois amiguinhos o
 - **Avatar 3D (formato VRM)** com voz neural pt-BR processada **inteiramente no dispositivo**:
   nenhum áudio sai do aparelho. Inclui lipsync pela amplitude do áudio, animações de corpo
   inteiro (acenar, pular, aplaudir, pensar, dormir), reação ao toque e cochilo por inatividade.
-- **Três personagens selecionáveis** — Lala, Moranguinha e Leo — cada um com voz coerente,
+- **Três personagens** — Lala e Leo, mais a Moranguinha, que é **desbloqueada quando a
+  criança completa 10 figurinhas** (recompensa de longo prazo). Cada um tem voz coerente,
   ajustada por *pitch shift* que preserva a duração da fala (a palavra sai mais aguda, porém
   clara e no ritmo natural).
 - **Conversa livre com IA** (Claude), com guardrails de conteúdo infantil aplicados no
@@ -67,18 +68,15 @@ Pré-requisitos: **JDK 17** e **Node 20 ou superior**. O projeto inclui uma cóp
 `tools/`, então não é necessário instalá-lo à parte.
 
 ```bash
-# 1. Instale as dependências (uma vez)
-npm install --prefix frontend
-npm install --prefix speech-service   # opcional — serviço de análise de fala
-
-# 2. Suba backend + frontend juntos
-npm run dev
+npm start
 ```
 
-O comando `npm run dev` inicia o backend (porta 8081) e o frontend ao mesmo tempo, com os logs
-de cada um identificados. No Windows, o script localiza o JDK 17 automaticamente; em outros
-sistemas, defina `JAVA_HOME` caso o backend não suba. Abra o endereço que o Vite exibir no
-terminal (por padrão `http://localhost:5173`).
+O `npm start` faz tudo: instala as dependências do frontend na primeira vez, builda o projeto
+(erros de código aparecem antes de subir), inicia backend (porta 8081) e frontend juntos com
+logs identificados, e abre o navegador sozinho quando o app responde. No Windows também dá
+para dar **duplo clique em `Iniciar-Laleo.cmd`**. Para desenvolvimento contínuo, `npm run dev`
+pula a etapa de build. No Windows o script localiza o JDK 17 automaticamente; em outros
+sistemas, defina `JAVA_HOME` caso o backend não suba.
 
 O serviço de fala é opcional e pode subir à parte com `npm run dev:fala`. Sem ele, o backend
 usa uma análise de reserva e o aplicativo continua funcionando.
@@ -95,8 +93,8 @@ export LALEO_IA_CHAVE=sk-ant-...   # modelo em laleo.ia.modelo (padrão claude-o
 
 ## Créditos e licenças dos assets
 
-- Avatares: **Vita** (VRoid samples, CC0), **StrawberryPrincess** e **DinoKid**
-  (coleção 100Avatars da Polygonal Mind, CC0).
+- Avatares: **Juanita** (a Lala), **StrawberryPrincess** (a Moranguinha) e **DinoKid**
+  (o Leo) — todos da coleção 100Avatars da Polygonal Mind, CC0.
 - Animações VRMA: *idle* de **pixiv/ChatVRM** (MIT) e demais de **tk256ailab/vrm-viewer** (MIT).
 - Voz: **Piper TTS** (`pt_BR-faber-medium`) via `@mintplex-labs/piper-tts-web`.
 - Transcrição: **Whisper** via `@huggingface/transformers`.

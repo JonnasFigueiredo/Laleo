@@ -1,11 +1,13 @@
 /**
  * Perfis de avatar: modelo 3D + voz coerentes. O adulto escolhe na área
- * dos responsáveis. Três personagens: Lala e Moranguinha (meninas, vozes
- * fofas e agudas) e Leo (menino, voz mais grave).
+ * dos responsáveis. Três personagens: Lala (menina, padrão — o modelo é a
+ * "Juanita" da 100Avatars, rebatizada para manter o Laleo = Lala + Leo),
+ * Leo (menino) e Moranguinha — desbloqueada quando a criança completa
+ * 10 figurinhas no álbum (recompensa de longo prazo).
  *
  * Nota técnica: o Piper só tem voz pt-BR masculina; as vozes fofas são a
  * mesma voz neural com pitch elevado (SoundTouch, ver fala/pitchFofo.ts) —
- * agora SEM acelerar a fala, para a palavra sair clara para a criança.
+ * sem acelerar a fala, para a palavra sair clara para a criança.
  */
 export interface PerfilAvatar {
   id: string
@@ -16,25 +18,18 @@ export interface PerfilAvatar {
   taxaVoz: number
   /** pitch do speechSynthesis no fallback */
   tomFallback: number
+  /** figurinhas necessárias para desbloquear; ausente = sempre disponível */
+  desbloqueioFigurinhas?: number
 }
 
 export const PERFIS: PerfilAvatar[] = [
   {
     id: 'lala',
     nome: 'Lala',
-    emoji: '👧',
+    emoji: '🎀',
     modelo: '/models/lala.vrm',
     taxaVoz: 1.24,
     tomFallback: 1.6,
-  },
-  {
-    id: 'morango',
-    nome: 'Moranguinha',
-    emoji: '🍓',
-    modelo: '/models/morango.vrm',
-    // A mais fofa: voz bem aguda e doce, de menininha pequena
-    taxaVoz: 1.32,
-    tomFallback: 1.9,
   },
   {
     id: 'leo',
@@ -44,6 +39,16 @@ export const PERFIS: PerfilAvatar[] = [
     // Voz de menino: menos aguda que as meninas
     taxaVoz: 1.08,
     tomFallback: 1.15,
+  },
+  {
+    id: 'morango',
+    nome: 'Moranguinha',
+    emoji: '🍓',
+    modelo: '/models/morango.vrm',
+    // A mais fofa: voz bem aguda e doce, de menininha pequena
+    taxaVoz: 1.32,
+    tomFallback: 1.9,
+    desbloqueioFigurinhas: 10,
   },
 ]
 
@@ -56,4 +61,9 @@ export function carregarPerfil(): PerfilAvatar {
 
 export function salvarPerfil(id: string) {
   localStorage.setItem(CHAVE, id)
+}
+
+/** O perfil está liberado para esta quantidade de figurinhas? */
+export function perfilDisponivel(perfil: PerfilAvatar, figurinhas: number): boolean {
+  return perfil.desbloqueioFigurinhas === undefined || figurinhas >= perfil.desbloqueioFigurinhas
 }

@@ -4,8 +4,15 @@ import { AlbumTela } from './AlbumTela'
 import { ConversaTela } from './ConversaTela'
 import { ExercicioTela } from './ExercicioTela'
 import { SelecaoCriancaTela } from './SelecaoCriancaTela'
+import { buscarAlbum } from './api'
 import { buscarCriancaAtiva, salvarCriancaAtiva } from './criancaAtiva'
-import { carregarPerfil, salvarPerfil, type PerfilAvatar } from './avatar/perfis'
+import {
+  PERFIS,
+  carregarPerfil,
+  perfilDisponivel,
+  salvarPerfil,
+  type PerfilAvatar,
+} from './avatar/perfis'
 import { definirPerfilVoz } from './fala/vozLale'
 import type { Crianca } from './types'
 import './App.css'
@@ -23,23 +30,37 @@ function App() {
     definirPerfilVoz(perfil.taxaVoz, perfil.tomFallback)
   }, [perfil])
 
+  // O desbloqueio de avatar é POR CRIANÇA (10 figurinhas): ao ativar uma
+  // criança, busca o álbum dela e, se o avatar salvo ainda está bloqueado
+  // para ela, volta ao padrão — o irmão sem figurinhas não herda o prêmio
+  const ativarCrianca = useCallback((c: Crianca) => {
+    setCrianca(c)
+    setEstrelas(c.estrelas)
+    buscarAlbum(c.id)
+      .then((album) => {
+        setPerfil((atual) => (perfilDisponivel(atual, album.ganhas.length) ? atual : PERFIS[0]))
+      })
+      .catch(() => {})
+  }, [])
+
   // Retoma a última criança usada neste aparelho
   useEffect(() => {
     buscarCriancaAtiva().then((c) => {
       if (c) {
-        setCrianca(c)
-        setEstrelas(c.estrelas)
+        ativarCrianca(c)
         setTela('exercicio')
       }
     })
-  }, [])
+  }, [ativarCrianca])
 
-  const escolherCrianca = useCallback((c: Crianca) => {
-    salvarCriancaAtiva(c.id)
-    setCrianca(c)
-    setEstrelas(c.estrelas)
-    setTela('exercicio')
-  }, [])
+  const escolherCrianca = useCallback(
+    (c: Crianca) => {
+      salvarCriancaAtiva(c.id)
+      ativarCrianca(c)
+      setTela('exercicio')
+    },
+    [ativarCrianca],
+  )
 
   const trocarPerfil = (novo: PerfilAvatar) => {
     salvarPerfil(novo.id)

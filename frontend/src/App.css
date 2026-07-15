@@ -837,3 +837,26 @@
 .exportar {
   margin-top: 12px;
 }
+
+/* ── Avatar desbloqueável ── */
+.cartao-opcao.bloqueado {
+  opacity: 0.55;
+  filter: grayscale(0.6);
+  cursor: not-allowed;
+}
+
+.dica-desbloqueio {
+  background: #fff4f8;
+  border: 2px dashed #ffb3cf;
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  color: #8a4a6a;
+  margin: 4px 0 12px;
+}
+
+.dica-desbloqueio.desbloqueada {
+  background: #f0fff4;
+  border-color: #9be0ae;
+  color: #2f7a4a;
+}

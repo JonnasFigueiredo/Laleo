@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Apoio à fala infantil: exercícios de fonoaudiologia gamificados com avatar 3D.",
   "scripts": {
+    "start": "node scripts/iniciar.mjs",
     "dev": "node scripts/dev.mjs",
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:fala": "npm --prefix speech-service start"
